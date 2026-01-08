@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface FinalGuideProps {
@@ -11,7 +12,7 @@ function parseMarkdown(text: string) {
   let tableRows: string[][] = [];
   let tableHeader: string[] = [];
   let inList = false;
-  let listItems: string[] = [];
+  let listItems: ReactNode[] = [];
   let listType: 'ul' | 'ol' = 'ul';
 
   const flushList = () => {
