@@ -1,0 +1,174 @@
+AUFGABE (Replit Agent – Fullstack UI Prototyp, 1:1 Nachbau)
+Du bist ein extrem genauer Frontend-/Fullstack-Engineer. Ziel ist ein klickbarer UI-Prototyp, der den in den Anhängen (Screenshots) gezeigten „Shopping Research“-Workflow 1:1 nachbildet. Der Prototyp dient einer Bachelorarbeit (Nudging/Agentic Commerce) als kontrolliertes Artefakt. KEINE echte Websuche, KEINE externen APIs, KEIN echtes Shopping – nur UI und kontrollierte Abläufe.
+
+INPUTS (werden von mir als Anhänge bereitgestellt)
+1) Mehrere Screenshots (UI-Zustände), die du pixelnah nachbauen sollst.
+2) Ein Textblock „Endergebnis“ (der finale generierte Shopping-Guide), den du am Ende im UI exakt so anzeigen sollst (copy/paste, inklusive Überschriften, Listen, Tabelle und Links/Footnotes).
+
+WICHTIG: Du MUSST die Screenshots als Ground Truth nutzen: Layout, Abstände, Typografie, Button-Form, Sprache (Deutsch/Englisch gemischt), Icon-Placement, Weißraum. Ziel ist „so nah wie möglich“ an den Bildern.
+
+SCOPE (was gebaut werden soll)
+- Eine Single-Page-Webapp (React). Keine komplexe Auth, kein Backend nötig (optional später).
+- Der Fokus ist UI/UX-Flow (State Machine) + Darstellung.
+- Alles läuft lokal im Browser. Mock-Daten sind ok.
+
+TECH-STACK (so umsetzen, dass es in Replit schnell läuft)
+- React + TypeScript (Vite oder Next.js – nimm das, was Replit am stabilsten unterstützt).
+- TailwindCSS für schnelles Styling.
+- Keine schweren UI-Libraries, außer wenn es die Umsetzung beschleunigt (z.B. Headless UI). Bevorzugt: pure React + Tailwind.
+
+DESIGNZIEL: „ChatGPT-artige Oberfläche“, aber ohne unnötige Interaktionen
+Du baust eine Oberfläche, die wie in den Screenshots aussieht:
+- Linke Sidebar mit Icons (statisch) wie im Screenshot.
+- Topbar mit „ChatGPT 5.2“ Dropdown/Label wie im Screenshot.
+- Zentral: sehr viel Weißraum, Fokus auf Chat/Workflow in der Mitte.
+- Unten: Chat-Eingabefeld.
+
+ABER: NICHT ERLAUBTE INTERAKTIONEN (müssen deaktiviert sein)
+- Kein Wechsel des Modells („ChatGPT 5.2“ nur Anzeige, nicht klickbar).
+- Keine Sidebar-Buttons klickbar (nur Deko).
+- Keine Navigation/Seitenknöpfe links/rechts (falls vorhanden) klickbar.
+- Keine „Personen hinzufügen“, „Gemeinsam nutzen“ etc. als Funktion – wenn sichtbar, dann nur als Deko.
+
+ERLAUBTE INTERAKTIONEN (nur der Forschungs-Workflow)
+- Der User darf in das Chatfeld tippen.
+- ABER: Absenden ist nur genau 1× möglich: genau ein initialer Prompt.
+- Danach ist das Chat-Inputfeld deaktiviert (read-only oder ausgegraut).
+- Danach läuft der Workflow über UI-Karten/Fragen (Budget/Aroma/Eigenschaften) + Skip/Timer + Review/Rate + Produktkarten + Endergebnis.
+
+KERNLOGIK (State Machine – muss sauber implementiert sein)
+Implementiere einen deterministischen Workflow mit diesen Zuständen, exakt in dieser Reihenfolge:
+
+STATE 0: Startscreen
+- Zeige die Frage „Wie kann ich dir helfen?“ zentral.
+- Im Input steht (wie im Screenshot-Beispiel) der Text, den der User eintippt (User kann ändern).
+- Neben dem Input soll „Shopping-Assistent“ als Label/Icon sichtbar sein (wie im Screenshot).
+- Senden ist möglich (Enter oder Pfeil-Button).
+
+STATE 1: User-Prompt gesendet (nur 1x)
+- Zeige die User-Nachricht rechts oben als Chat-Bubble (wie im Screenshot).
+- Danach: starte sofort den „Gathering requirements“-Flow.
+
+STATE 2: Gathering requirements – Frage 1: Budget
+- Headline/Label: „Gathering requirements“
+- Frage: „Gesamtes Budget?“
+- Antwortoptionen als 2x2 Grid mit runden Radio-ähnlichen Buttons:
+  • „Bis 10 €“
+  • „Bis 20 €“
+  • „Bis 30 €“
+  • „30 €+“
+- Darunter ein breiter Button/Chip: „Something else…“ (Freitext-Alternative; muss sichtbar sein, kann aber vorerst ohne Funktion sein).
+- Darunter: „Skip“ mit einem kleinen Kreis/Timer-Indikator (wie im Screenshot).
+- Timer-Logik: Wenn der User nichts auswählt, läuft ein Countdown (z.B. 3 Sekunden) und danach wird automatisch zur nächsten Frage weitergeschaltet.
+- Optional: User kann währenddessen „Skip“ klicken, ABER erst nachdem der Timer abgelaufen ist ODER du erlaubst den Skip sofort – entscheide anhand Screenshot-Optik (wenn der Kreis „läuft“, wirkt es wie timed). Hauptsache: Der Auto-Weiterlauf ohne Auswahl ist möglich.
+
+STATE 3: Gathering requirements – Frage 2: Aroma
+- Frage: „Gewünschtes Aroma?“
+- Optionen (2x2):
+  • „Kräftig“
+  • „Mild“
+  • „Fruchtig“
+  • „Nussig“
+- Wieder „Something else…“ + „Skip“ + Auto-Weiterlauf per Timer.
+
+STATE 4: Gathering requirements – Frage 3: Eigenschaften
+- Frage: „Wichtige Eigenschaften?“
+- Optionen (2x2):
+  • „Bio“
+  • „Fairtrade“
+  • „Regional“
+  • „Entkoffeiniert“
+- Wieder „Something else…“ + „Skip“ + Auto-Weiterlauf per Timer.
+
+STATE 5: Review consideration – Gate
+- Überschrift: „Review consideration“
+- Layout: Links ein Bild-Grid/Preview-Platzhalter wie im Screenshot (du nutzt Mock-Bilder oder neutrale Platzhalter, bis ich echte Bilder einsetze).
+- Rechts Text: „Give quick feedback to help ChatGPT pick the best options for you.“
+- Primärer großer Button: „Preview and rate“ (mit Ladeindikator/Spinner-Optik möglich).
+- Sekundärer kleiner Text-Button: „Skip all“
+- Logik: Wenn der User nichts klickt, darf nach kurzem Timer (z.B. 3–5 Sek.) automatisch „Skip all“ passieren (weil ich im Baseline-Durchlauf alles durchlaufen lassen will).
+- Wenn User „Preview and rate“ klickt: gehe zu STATE 6 (Produktkarten) und zeige mehrere Karten nacheinander. Wenn „Skip all“: ebenfalls zu STATE 6, aber ohne „Rating“-Loop (du kannst trotzdem Karten zeigen, aber du darfst die Anzahl reduzieren).
+
+STATE 6: Produktkarten / Rating-Loop
+- Zeige eine große Produktkarte, die dem Screenshot entspricht:
+  - links großes Produktbild
+  - rechts Produktname + Preis + Händler („Amazon.de“) + eine Tabelle/Attributliste (z.B. Verpackungsabmessungen, Produktbezeichnung, Netto-Gewicht, Ursprungsland, Koffeingehalt, Form, Röstgrad, Paketinformationen)
+  - Scrollbar im Attributbereich (wie Screenshot)
+- Unten auf der Karte zwei Buttons:
+  • „Not interested“ (mit X)
+  • „More like this“ (mit Haken)
+- Logik: Wenn User nichts klickt, läuft nach kurzer Zeit auto-weiter zur nächsten Karte oder beendet den Loop (Baseline: „keine Auswahl getroffen“).
+- Zeige 3 Karten insgesamt (konfigurierbar). Danach gehe zu STATE 7.
+
+WICHTIG: In dieser Phase soll sichtbar sein, dass Feedback möglich wäre, aber Baseline kann ohne Klick durchlaufen.
+
+STATE 7: Endergebnis / Shopping-Guide
+- Zeige den finalen Textblock („Endergebnis“) als große formatierte Antwort (Markdown-artig) im Chatverlauf.
+- Muss enthalten:
+  - Titel „# Kaffee kaufen: schnelle, gute Optionen für Zuhause“
+  - Abschnitt „## Zusammenfassung“
+  - „## Best overall“ + Unterüberschriften + Listen
+  - Vergleichstabelle (du darfst die Tabelle responsive machen: horizontal scroll oder in Cards umbrechen, aber Inhalt muss erhalten bleiben)
+  - Weitere Picks (2)–(6)
+  - Abschnitt „Wie diese Auswahl entstanden ist“ + „Kurze Kauf-Hinweise“
+  - Footnotes/Links unten (kann als anklickbare Links angezeigt werden)
+- Das Endergebnis soll so aussehen wie ein „finaler Ratgeber“, nicht wie Rohtext.
+
+DATENMODELL (Mock, aber strukturiert)
+Lege eine statische JSON-Struktur an:
+- userPrompt: string
+- answers: { budget?: string, aroma?: string, properties?: string[] }
+- productCards: Array<{ title, price, merchant, imageUrl, attributes: Record<string,string> }>
+- finalGuideMarkdown: string (der komplette Textblock)
+
+WICHTIG: Auch wenn der User Optionen anklickt, darfst du im ersten Prototyp das Endergebnis unverändert lassen. Hauptsache: UI/Flow steht.
+
+UI-DETAILS (aus Screenshots ableiten – harte Anforderungen)
+- Hintergrund: weiß, sehr viel Weißraum.
+- Typografie: clean, sans-serif, ähnliche Größen wie Screenshot (z.B. große Center-Headline am Start).
+- Cards und Buttons: abgerundete Ecken, dünne Border/Shadow sehr subtil.
+- Option-Buttons: radio-ähnliche Kreise links, Text rechts, volle Breite.
+- Sprachenmix beibehalten:
+  - „Gathering requirements“, „Review consideration“, „Something else…“, „Preview and rate“, „Skip all“ sind Englisch.
+  - Fragen und Optionen sind Deutsch.
+- Bottom-Input: groß, abgerundet, mit Icon/Label „Shopping-Assistent“ links im Inputbereich.
+- Nach dem einmaligen Absenden: Input disabled (visuell klar: ausgegraut oder Cursor deaktiviert).
+
+BENUTZERFÜHRUNG (wichtig für Bachelorarbeit-Realismus)
+- Übergänge sollen „smooth“ wirken (kleine Fade/Slide Animationen sind ok, aber nicht übertreiben).
+- Auto-Weiterlauf (Skip-Countdown) ist zentral: Baseline muss ohne Klicks funktionieren.
+- In jedem Schritt soll der Screen so aussehen, als wäre er Teil eines echten Assistenten.
+
+AKZEPTANZKRITERIEN (Checkliste – du musst alles erfüllen)
+1) App startet mit „Wie kann ich dir helfen?“ und Chat-Input.
+2) User kann genau 1 Prompt senden. Danach ist Senden deaktiviert.
+3) Danach erscheinen nacheinander exakt die drei „Gathering requirements“-Screens (Budget → Aroma → Eigenschaften) mit Option-Grids + Something else + Skip/Timer.
+4) Ohne Interaktion läuft alles automatisch durch bis Review consideration.
+5) Review consideration erscheint mit großem „Preview and rate“ und kleinem „Skip all“. Ohne Klicks läuft es weiter.
+6) Produktkarten-Ansicht erscheint (mind. 1 Karte), mit „Not interested“ und „More like this“. Ohne Klicks geht es weiter.
+7) Am Ende erscheint der komplette Endergebnis-Text im UI (schön formatiert).
+8) Sidebar/Topbar sind da, aber komplett deaktiviert (nur Deko).
+9) Layout ähnelt den Screenshots so stark wie möglich.
+
+UMSETZUNGSPLAN (bitte genau so arbeiten)
+- Schritt 1: Projekt scaffold (React+TS+Tailwind).
+- Schritt 2: Layout-Shell (Sidebar, Topbar, Center, Input).
+- Schritt 3: State Machine + Datenmodell.
+- Schritt 4: Screens nacheinander umsetzen (Budget/Aroma/Eigenschaften/Review/Product/Final).
+- Schritt 5: Styling pixelnah anhand Screenshots.
+- Schritt 6: Endergebnis-Markdown rendering (z.B. mit minimalem Markdown Renderer oder eigener einfacher Parser). Wenn du eine Library nutzt, nimm eine sehr kleine, stabile.
+- Schritt 7: Finaler Polishing-Pass (Spacing, Fonts, Buttons).
+
+WAS DU NICHT MACHEN DARFST
+- Keine externe Websuche, keine echten Produktdaten, keine API Calls.
+- Keine Account-Logins oder Checkout.
+- Keine Ablenkung: Kein „hier wäre eine tolle Erweiterung“ – erst UI liefern.
+
+OUTPUT (was du mir lieferst)
+- Voll lauffähige Replit App.
+- Saubere Ordnerstruktur.
+- Kurze README im Projekt: „How to run“ + „How to replace images/finalGuide text“.
+
+JETZT STARTEN
+- Lies zuerst die Screenshots. Beschreibe kurz (in 5–10 Bulletpoints), welche UI-States du erkannt hast (nur zur Bestätigung).
+- Dann implementiere sofort.
