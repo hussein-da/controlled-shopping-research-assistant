@@ -43,27 +43,39 @@ export interface WorkflowState {
 
 export type AppState = 
   | 'start'
-  | 'prompt_sent'
+  | 'mode_selection'
+  | 'loading'
+  | 'starting'
   | 'budget'
   | 'aroma'
   | 'properties'
   | 'review_gate'
   | 'product_cards'
+  | 'transition'
   | 'final_guide';
+
+export interface Source {
+  id: string;
+  name: string;
+  title: string;
+  icon?: string;
+}
 
 export const mockProductCards: ProductCard[] = [
   {
     id: '1',
-    title: 'AROMA Kicco Swiss Edition Portion system Black',
-    price: '149,00 €',
-    merchant: 'macchinearoma',
+    title: 'dmBio Caffè Crema ganze Bohne Naturland',
+    price: '6,95 €',
+    merchant: 'dm.de',
     imageUrl: '/placeholder-coffee-1.jpg',
     rating: '4.5',
     reviews: '234',
     attributes: {
-      'Marke': 'Aroma',
-      'Kapselmaschine': 'Ja',
-      'Automatisierung': 'Halbautomatisch',
+      'Marke': 'dmBio',
+      'Verarbeitungsform': 'Ganze Bohne',
+      'Zertifizierung': 'Naturland, Bio',
+      'Herkunft': 'Peru, Honduras',
+      'Röstgrad': 'Mittel',
     }
   },
   {
@@ -72,6 +84,8 @@ export const mockProductCards: ProductCard[] = [
     price: '7,95 €',
     merchant: 'Butlers Chocolates UC',
     imageUrl: '/placeholder-coffee-2.jpg',
+    rating: '4.2',
+    reviews: '156',
     attributes: {
       'Verpackungsabmessungen': '8 x 10 x 25 cm',
       'Produktbezeichnung': 'Gemahlener Kaffee',
@@ -89,26 +103,29 @@ export const mockProductCards: ProductCard[] = [
     attributes: {
       'Marke': 'Jacobs',
       'Verarbeitungsform': 'Gemahlen',
+      'Röstgrad': 'Mittel',
+      'Aroma': 'Ausgewogen, mild',
     }
   },
   {
     id: '4',
-    title: 'Lavazza Qualità Rossa Kaffeebohnen',
-    price: '14,99 €',
+    title: 'Tchibo Kaffeeprobierset Caffè Crema und Espresso 400g',
+    price: '9,99 €',
     merchant: 'Amazon.de',
     imageUrl: '/placeholder-coffee-4.jpg',
     rating: '4.6',
-    reviews: '12847',
+    reviews: '1247',
     attributes: {
-      'Produktbezeichnung': 'Röstkaffee in Bohnen',
-      'Netto-Gewicht': '1 Kilogramm',
-      'Röstgrad': 'Mittlere Röstung',
+      'Marke': 'Tchibo',
+      'Inhalt': '4 x 100g',
+      'Verarbeitungsform': 'Ganze Bohne',
+      'Röstgrad': 'Verschiedene',
     }
   },
   {
     id: '5',
-    title: 'Dallmayr prodomo Ganze Bohnen',
-    price: '18,49 €',
+    title: 'Dallmayr Home Barista Caffè Crema',
+    price: '8,49 €',
     merchant: 'Amazon.de',
     imageUrl: '/placeholder-coffee-5.jpg',
     rating: '4.8',
@@ -117,86 +134,194 @@ export const mockProductCards: ProductCard[] = [
       'Marke': 'Dallmayr',
       'Form': 'Ganze Bohne',
       'Röstgrad': 'Mittlere Röstung',
+      'Gewicht': '1kg',
+    }
+  },
+  {
+    id: '6',
+    title: 'Landpark Bio Kaffee Crema',
+    price: '7,49 €',
+    merchant: 'bio-laden.de',
+    imageUrl: '/placeholder-coffee-6.jpg',
+    rating: '4.4',
+    reviews: '567',
+    attributes: {
+      'Marke': 'Landpark',
+      'Zertifizierung': 'Bio',
+      'Verarbeitungsform': 'Ganze Bohne',
+      'Röstgrad': 'Mittel',
+    }
+  },
+  {
+    id: '7',
+    title: 'Fairglobe Bio Fairtrade Café del Mundo',
+    price: '5,99 €',
+    merchant: 'Lidl',
+    imageUrl: '/placeholder-coffee-7.jpg',
+    rating: '4.3',
+    reviews: '892',
+    attributes: {
+      'Marke': 'Fairglobe',
+      'Zertifizierung': 'Fairtrade, Bio',
+      'Verarbeitungsform': 'Gemahlen',
+      'Herkunft': 'Südamerika',
+    }
+  },
+  {
+    id: '8',
+    title: 'GLOBO Bio-Kaffee COCLA Peru',
+    price: '8,95 €',
+    merchant: 'globo-fairtrade.com',
+    imageUrl: '/placeholder-coffee-8.jpg',
+    rating: '4.6',
+    reviews: '423',
+    attributes: {
+      'Marke': 'GLOBO',
+      'Zertifizierung': 'Bio, Fairtrade',
+      'Herkunft': 'Peru',
+      'Verarbeitungsform': 'Ganze Bohne',
+    }
+  },
+  {
+    id: '9',
+    title: 'GEPA Faires Pfund Bio Espresso',
+    price: '9,49 €',
+    merchant: 'GEPA Fair Trade Shop',
+    imageUrl: '/placeholder-coffee-9.jpg',
+    rating: '4.7',
+    reviews: '634',
+    attributes: {
+      'Marke': 'GEPA',
+      'Zertifizierung': 'Fairtrade, Bio',
+      'Verarbeitungsform': 'Ganze Bohne',
+      'Röstgrad': 'Dunkel',
+    }
+  },
+  {
+    id: '10',
+    title: 'Naturgut Bio Kaffee Crema',
+    price: '6,49 €',
+    merchant: 'Penny',
+    imageUrl: '/placeholder-coffee-10.jpg',
+    rating: '4.1',
+    reviews: '312',
+    attributes: {
+      'Marke': 'Naturgut',
+      'Zertifizierung': 'Bio',
+      'Verarbeitungsform': 'Ganze Bohne',
+      'Röstgrad': 'Mittel',
     }
   }
 ];
 
-export const finalGuideMarkdown = `# Kaffee kaufen: schnelle, gute Optionen für Zuhause
+export const mockSources: Source[] = [
+  { id: '1', name: 'Coffeeness', title: 'Die 10 besten Discounter-Kaffeebohnen im Test 2026: Aldi, Lidl & Co' },
+  { id: '2', name: 'SupermarktCheck', title: 'Fairglobe Bio Cafe del Mundo ganze Bohne: Preis, Angebote & Bewertungen' },
+  { id: '3', name: 'Coffeeness', title: 'Die besten Discounter-Kaffeebohnen im Test 2026: Aldi, Lidl & Co' },
+  { id: '4', name: 'Lidl', title: 'Fairglobe Bio Fairtrade Cafe del Mundo kaufen | LIDL' },
+  { id: '5', name: 'GLOBO', title: 'Bio-Kaffee COCLA PERU - hier auf globo-fairtrade.com | GLOBO' },
+  { id: '6', name: 'GLOBO', title: 'Bio-Kaffee COCLA PERU - hier auf globo-fairtrade.com | GLOBO' },
+  { id: '7', name: 'GEPA Shop', title: 'Faires Pfund Bio Espresso | Bohnen – GEPA Fair Trade Shop' },
+  { id: '8', name: 'GEPA Shop', title: 'Faires Pfund Bio Espresso | Bohnen – GEPA Fair Trade Shop' },
+];
 
-## Zusammenfassung
+export const finalGuideMarkdown = `# Kaffee kaufen: schnelle, gute Optionen für Vollautomat und kleines Budget
 
-Dieser Ratgeber hilft dir, den passenden Kaffee für deinen Alltag zu finden. Basierend auf deinen Präferenzen haben wir die besten Optionen zusammengestellt – von Premium-Bohnen bis zu erschwinglichen Alternativen.
+## Kurzer Überblick
 
-## Best overall
+Du suchst fair/bio-zertifizierten Kaffee für deinen Vollautomaten, bei einem Budget unter 10 € pro Packung. Die Auswahl fokussiert sich auf ganze Bohnen, die für Vollautomaten geeignet sind, mit Fairtrade- oder Bio-Zertifizierung.
 
-### J.J. Darboven Specialty Melange Finesse
+---
 
-**Warum diese Wahl?**
-- Ausgezeichnete Balance zwischen Qualität und Geschmack
+## Beste Gesamtwahl
+
+### dmBio Caffè Crema ganze Bohne Naturland
+
+**Warum diese Wahl zuerst?**
+- Erfüllt beide Kriterien: Bio (Naturland) und Budget unter 10 €
+- Speziell für Vollautomaten konzipiert
+- Bei dm flächendeckend verfügbar
+
+**Typischer Geschmack / Einsatz:**
+- Ausgewogen, mild-aromatisch
+- Ideal für Caffè Crema aus dem Vollautomaten
 - Mittlere Röstung für vielseitigen Genuss
-- Ganze Bohnen für maximale Frische
 
-**Eigenschaften:**
-- Herkunft: Hochwertige Arabica-Mischung
-- Röstgrad: Mittel
-- Geschmacksprofil: Ausgewogen, mild-aromatisch
-- Preis: 119,90 € für 6 kg (ca. 20 €/kg)
+**Tradeoffs:**
+- Keine Fairtrade-Zertifizierung (nur Bio/Naturland)
+- Geschmack eher mild – für kräftigeren Espresso weniger geeignet
+
+**Verfügbarkeit / Hinweis:**
+- dm-Märkte deutschlandweit, auch online
+- Preis: 6,95 € für 250g
 
 ---
 
 ## Vergleichstabelle
 
-| Produkt | Preis | Menge | Preis/kg | Röstgrad | Bewertung |
-|---------|-------|-------|----------|----------|-----------|
-| J.J. Darboven Melange | 119,90 € | 6 kg | ~20 € | Mittel | ⭐⭐⭐⭐⭐ |
-| Lavazza Qualità Rossa | 14,99 € | 1 kg | 14,99 € | Mittel | ⭐⭐⭐⭐ |
-| Jacobs Krönung | 12,49 € | 500 g | 24,98 € | Leicht | ⭐⭐⭐⭐ |
+| Produkt | Preis pro Packung | Fair/Bio | Geschmack/Einsatz | Verfügbarkeit |
+|---------|-------------------|----------|-------------------|---------------|
+| dmBio Caffè Crema | 6,95 € | Bio | Mild, Crema | dm |
+| Fairglobe Café del Mundo | 5,99 € | Fairtrade, Bio | Ausgewogen | Lidl |
+| GLOBO COCLA Peru | 8,95 € | Fairtrade, Bio | Nussig, kräftig | Online |
 
 ---
 
-## Weitere Picks
+## Weitere starke Picks
 
-### (2) Lavazza Qualità Rossa
-Italienische Traditionsmarke mit kräftigem Geschmack. Ideal für Espresso-Liebhaber, die einen vollmundigen Kaffee bevorzugen.
+### 2) Budget-Top, stets fair/bio
 
-### (3) Jacobs Krönung
-Deutscher Klassiker mit mildem Aroma. Perfekt für den täglichen Filterkaffee.
+**Fairglobe Bio Fairtrade Café del Mundo**
 
-### (4) Melitta BellaCrema
-Cremiger Kaffee mit nussigen Noten. Besonders gut für Vollautomaten geeignet.
+**Was spricht dafür:**
+- Günstigster Preis mit doppelter Zertifizierung
+- Bei Lidl regelmäßig verfügbar
 
-### (5) Tchibo Beste Bohne
-Preis-Leistungs-Sieger für den Alltag. Zuverlässige Qualität zu fairem Preis.
+**Einsatz:**
+- Vollautomaten und Filtermaschinen
+- Ausgewogenes Aroma
 
-### (6) Dallmayr prodomo
-Premium-Kaffee aus Bayern. Für anspruchsvolle Genießer.
+**Tradeoffs:**
+- Nur als gemahlener Kaffee verfügbar
+- Verfügbarkeit schwankt je nach Filiale
+
+**Wann wählen:**
+- Wenn Preis wichtigstes Kriterium ist
+
+### 3) Solide Mittelpreis-Alternative für kräftigeren Geschmack
+
+**GLOBO Bio-Kaffee COCLA Peru**
+
+**Was spricht dafür:**
+- Kräftigeres Aroma als dmBio
+- Direkter Fairtrade-Bezug
+
+**Einsatz:**
+- Espresso und Caffè Crema
+- Für Liebhaber intensiverer Röstungen
+
+**Tradeoffs:**
+- Nur online erhältlich
+- Höherer Preis (8,95 €)
+
+**Wann wählen:**
+- Wenn du einen kräftigeren Geschmack bevorzugst
 
 ---
 
-## Wie diese Auswahl entstanden ist
+## Wie du die Auswahl weiter eingrenzt
 
-Die Empfehlungen basieren auf:
-1. **Qualitätsbewertungen** von unabhängigen Testern
-2. **Kundenbewertungen** mit mindestens 4+ Sternen
-3. **Preis-Leistungs-Verhältnis** im jeweiligen Segment
-4. **Verfügbarkeit** bei gängigen Händlern
-
----
-
-## Kurze Kauf-Hinweise
-
-- **Frische:** Achte auf das Röstdatum – je frischer, desto besser
-- **Lagerung:** Kühl, trocken und luftdicht aufbewahren
-- **Mahlung:** Für beste Ergebnisse erst kurz vor der Zubereitung mahlen
-- **Wasserhärte:** Weiches Wasser bringt das Aroma besser zur Geltung
+- **Budget strikt ≤ 10 €?** Starte mit dmBio oder Fairglobe; beide erfüllen Budget, sind fair/bio und für Vollautomaten praxistauglich.
+- **Testen kleineren Packs?** Nimm Globo 250g, um zu prüfen, ob du nussig-schokoladige, etwas kräftigere Profile magst, ohne gleich eine 500g-Packung zu kaufen.
+- **Mehr Fair/Bio-Vertrauen, etwas kräftiger?** Wähle GEPA, wenn du bereit bist, knapp über Budget zu gehen, aber dafür eine sehr starke, auf Fair-Trade spezialisierte Marke zu nutzen.
+- **Wenn nichts verfügbar ist:** Naturgut als Ersatz, aber Charge prüfen; oder im nächsten Einkauf bei dm oder Lidl erneut nach dmBio bzw. Fairglobe schauen.
 
 ---
 
-### Quellen & Links
+## Hinweise zu Lagerung und Nutzung im Vollautomaten
 
-[1] [Amazon.de - J.J. Darboven](https://amazon.de)
-[2] [Amazon.de - Lavazza](https://amazon.de)
-[3] [Amazon.de - Jacobs](https://amazon.de)
-[4] [Stiftung Warentest - Kaffee Test 2024](https://test.de)
-[5] [Coffee Review - Bewertungen](https://coffeereview.com)
+- **Frisch öffnen, trocken und dunkel lagern;** idealerweise in einem luftdichten Behälter.
+- **Für längere Haltbarkeit und besseren Geschmack** lohnt sich, eine 500g-Packung innerhalb von 2–4 Wochen zu verbrauchen. Kleinere Packungen wie 250g können helfen, wenn du selten Kaffee trinkst oder öfter verschiedene Sorten ausprobieren möchtest.
+
+So bekommst du zuverlässig fair/bio-zertifizierten Kaffee für deinen Vollautomaten, ohne das Budget zu sprengen – mit klaren Alternativen, falls Verfügbarkeit oder Geschmack variieren.
 `;

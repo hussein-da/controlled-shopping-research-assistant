@@ -1,5 +1,6 @@
 import { ProductCard } from '@shared/schema';
-import { ArrowDown } from 'lucide-react';
+import { ArrowDown, Edit3 } from 'lucide-react';
+import { StatusDisplay } from './status-display';
 
 interface RejectionDialogProps {
   product: ProductCard;
@@ -7,7 +8,7 @@ interface RejectionDialogProps {
   onSkip: () => void;
 }
 
-const rejectionReasons = ['Price', 'Style', 'Brand', 'Features', 'Something else...'];
+const rejectionReasons = ['Price', 'Style', 'Brand', 'Features'];
 
 export function RejectionDialog({ product, onSelectReason, onSkip }: RejectionDialogProps) {
   return (
@@ -15,7 +16,7 @@ export function RejectionDialog({ product, onSelectReason, onSkip }: RejectionDi
       className="space-y-6 animate-in fade-in duration-300"
       data-testid="rejection-dialog"
     >
-      <p className="text-sm text-gray-500">Clarifying product pricing</p>
+      <StatusDisplay status="Clarifying product pricing" showLoading={false} />
 
       <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
         <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
@@ -25,7 +26,7 @@ export function RejectionDialog({ product, onSelectReason, onSkip }: RejectionDi
         </div>
         <div className="min-w-0">
           <h4 className="font-medium text-gray-900 truncate">{product.title}</h4>
-          <p className="text-sm text-gray-500">{product.price} • {product.merchant}</p>
+          <p className="text-sm text-gray-500">{product.price} · {product.merchant}</p>
         </div>
       </div>
 
@@ -45,11 +46,26 @@ export function RejectionDialog({ product, onSelectReason, onSkip }: RejectionDi
               {reason}
             </button>
           ))}
+          
+          <button
+            onClick={() => onSelectReason('other')}
+            className="w-full flex items-center justify-center gap-2 py-3.5 px-4 border border-gray-200 rounded-full text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+            data-testid="rejection-reason-something-else"
+          >
+            <Edit3 className="w-4 h-4" />
+            <span>Something else...</span>
+          </button>
         </div>
       </div>
 
       <div className="flex justify-center pt-2">
-        <ArrowDown className="w-5 h-5 text-gray-400" />
+        <button
+          onClick={onSkip}
+          className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+          data-testid="rejection-skip-button"
+        >
+          <ArrowDown className="w-5 h-5" />
+        </button>
       </div>
     </div>
   );

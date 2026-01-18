@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { AppState, WorkflowState, mockProductCards, finalGuideMarkdown } from '@shared/schema';
+import { AppState, WorkflowState, mockProductCards, mockSources, finalGuideMarkdown } from '@shared/schema';
 import { Sidebar } from '@/components/shopping/sidebar';
 import { Topbar } from '@/components/shopping/topbar';
 import { ChatInput } from '@/components/shopping/chat-input';
@@ -9,15 +9,16 @@ import { GatheringRequirements } from '@/components/shopping/gathering-requireme
 import { ReviewGate } from '@/components/shopping/review-gate';
 import { ProductCardView } from '@/components/shopping/product-card-view';
 import { FinalGuide } from '@/components/shopping/final-guide';
+import { TransitionScreen } from '@/components/shopping/transition-screen';
+import { AllProductsModal } from '@/components/shopping/all-products-modal';
+import { SourcesPanel } from '@/components/shopping/sources-panel';
 import { LoadingDots, StatusDisplay } from '@/components/shopping/status-display';
 
 const TIMER_DURATION = 20000;
 const PRODUCT_TIMER_DURATION = 15000;
 
-type ExtendedAppState = AppState | 'loading' | 'starting';
-
 export default function ShoppingResearch() {
-  const [appState, setAppState] = useState<ExtendedAppState>('start');
+  const [appState, setAppState] = useState<AppState>('start');
   const [workflowState, setWorkflowState] = useState<WorkflowState>({
     userPrompt: '',
     answers: {},
@@ -28,13 +29,24 @@ export default function ShoppingResearch() {
   const [isInputDisabled, setIsInputDisabled] = useState(false);
   const [previousSelection, setPreviousSelection] = useState<string | undefined>(undefined);
   const [productStatus, setProductStatus] = useState<string>('');
-  const [likedProduct, setLikedProduct] = useState<string | null>(null);
+  const [showAllProductsModal, setShowAllProductsModal] = useState(false);
+  const [showSourcesPanel, setShowSourcesPanel] = useState(false);
+  const [shoppingModeSelected, setShoppingModeSelected] = useState(false);
+  const [startTime, setStartTime] = useState<number>(0);
+  const [elapsedTime, setElapsedTime] = useState<string>('3m');
+
+  const handleModeSelect = useCallback((mode: string) => {
+    if (mode === 'shopping') {
+      setShoppingModeSelected(true);
+    }
+  }, []);
 
   const handleSendMessage = useCallback(() => {
-    if (inputValue.trim() && !isInputDisabled) {
+    if (inputValue.trim() && !isInputDisabled && shoppingModeSelected) {
       setWorkflowState(prev => ({ ...prev, userPrompt: inputValue }));
       setIsInputDisabled(true);
       setAppState('loading');
+      setStartTime(Date.now());
       
       setTimeout(() => {
         setAppState('starting');
@@ -45,7 +57,7 @@ export default function ShoppingResearch() {
         setPreviousSelection(undefined);
       }, 2500);
     }
-  }, [inputValue, isInputDisabled]);
+  }, [inputValue, isInputDisabled, shoppingModeSelected]);
 
   const handleBudgetSelect = useCallback((value: string) => {
     setWorkflowState(prev => ({ ...prev, answers: { ...prev.answers, budget: value } }));
@@ -89,7 +101,7 @@ export default function ShoppingResearch() {
 
   const handleSkipAll = useCallback(() => {
     setProductStatus('');
-    setAppState('product_cards');
+    setAppState('transition');
   }, []);
 
   const handleProductRating = useCallback((rating: 'interested' | 'not_interested', reason?: string) => {
@@ -98,10 +110,9 @@ export default function ShoppingResearch() {
     
     if (currentId) {
       if (rating === 'interested') {
-        setLikedProduct(currentProduct.title);
         setProductStatus(`Finding more like ${currentProduct.title.split(' ').slice(0, 3).join(' ')}`);
       } else if (reason === 'Price') {
-        setProductStatus('Finding a budget-friendly option');
+        setProductStatus('Clarifying product pricing');
       } else {
         setProductStatus('Searching for alternatives');
       }
@@ -121,15 +132,25 @@ export default function ShoppingResearch() {
         currentProductIndex: prev.currentProductIndex + 1,
       }));
     } else {
-      setAppState('final_guide');
+      setAppState('transition');
     }
   }, [workflowState.currentProductIndex]);
 
+  const handleTransitionComplete = useCallback(() => {
+    const elapsed = Math.floor((Date.now() - startTime) / 60000);
+    setElapsedTime(`${Math.max(elapsed, 3)}m`);
+    setAppState('final_guide');
+  }, [startTime]);
+
   useEffect(() => {
     if (workflowState.currentProductIndex >= mockProductCards.length && appState === 'product_cards') {
-      setAppState('final_guide');
+      setAppState('transition');
     }
   }, [workflowState.currentProductIndex, appState]);
+
+  const likedCount = Object.values(workflowState.productRatings).filter(r => r === 'interested').length;
+  const notInterestedCount = Object.values(workflowState.productRatings).filter(r => r === 'not_interested').length;
+  const productsViewed = workflowState.currentProductIndex;
 
   const renderContent = () => {
     if (appState === 'start') {
@@ -182,8 +203,24 @@ export default function ShoppingResearch() {
           />
         )}
 
+        {appState === 'transition' && (
+          <TransitionScreen
+            onComplete={handleTransitionComplete}
+            productsViewed={productsViewed || 10}
+          />
+        )}
+
         {appState === 'final_guide' && (
-          <FinalGuide markdown={finalGuideMarkdown} />
+          <FinalGuide 
+            markdown={finalGuideMarkdown}
+            elapsedTime={elapsedTime}
+            productsViewed={productsViewed || 13}
+            likedCount={likedCount || 8}
+            notInterestedCount={notInterestedCount || 2}
+            tags={['Kaffee', 'Fairtrade/Bio', 'Vollautomat', 'Bis 10 €']}
+            onViewProducts={() => setShowAllProductsModal(true)}
+            onViewSources={() => setShowSourcesPanel(true)}
+          />
         )}
       </div>
     );
@@ -208,8 +245,32 @@ export default function ShoppingResearch() {
           onSend={handleSendMessage}
           disabled={isInputDisabled}
           placeholder={isInputDisabled ? "Stelle irgendeine Frage" : "Ich möchte Kaffee kaufen..."}
+          showModeLabel={shoppingModeSelected || isInputDisabled}
+          showPlusMenu={!shoppingModeSelected && !isInputDisabled}
+          onModeSelect={handleModeSelect}
         />
       </div>
+
+      {showAllProductsModal && (
+        <AllProductsModal
+          products={mockProductCards}
+          ratings={workflowState.productRatings}
+          onClose={() => setShowAllProductsModal(false)}
+        />
+      )}
+
+      {showSourcesPanel && (
+        <>
+          <div 
+            className="fixed inset-0 bg-black/20 z-40"
+            onClick={() => setShowSourcesPanel(false)}
+          />
+          <SourcesPanel
+            sources={mockSources}
+            onClose={() => setShowSourcesPanel(false)}
+          />
+        </>
+      )}
     </div>
   );
 }

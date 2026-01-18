@@ -30,6 +30,9 @@ export function ProductCardView({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    setShowRejectionDialog(false);
+    setShowDetailModal(false);
+    
     timerRef.current = setTimeout(() => {
       onTimeout();
     }, timerDuration);

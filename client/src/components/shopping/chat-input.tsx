@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Plus, ShoppingBag, Mic, ArrowUp, Square } from 'lucide-react';
+import { ModeSelectionOverlay } from './mode-selection-overlay';
 
 interface ChatInputProps {
   value: string;
@@ -6,9 +8,23 @@ interface ChatInputProps {
   onSend: () => void;
   disabled: boolean;
   placeholder?: string;
+  showModeLabel?: boolean;
+  onModeSelect?: (mode: string) => void;
+  showPlusMenu?: boolean;
 }
 
-export function ChatInput({ value, onChange, onSend, disabled, placeholder }: ChatInputProps) {
+export function ChatInput({ 
+  value, 
+  onChange, 
+  onSend, 
+  disabled, 
+  placeholder,
+  showModeLabel = false,
+  onModeSelect,
+  showPlusMenu = false
+}: ChatInputProps) {
+  const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey && !disabled) {
       e.preventDefault();
@@ -16,13 +32,20 @@ export function ChatInput({ value, onChange, onSend, disabled, placeholder }: Ch
     }
   };
 
+  const handlePlusClick = () => {
+    if (!disabled && showPlusMenu) {
+      setIsPlusMenuOpen(true);
+    }
+  };
+
+  const handleModeSelect = (mode: string) => {
+    setIsPlusMenuOpen(false);
+    onModeSelect?.(mode);
+  };
+
   return (
     <div className="px-4 pb-4 pt-2 bg-white" data-testid="chat-input-container">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center gap-2 mb-2">
-          <ArrowUp className="w-4 h-4 text-gray-400" />
-        </div>
-        
         <div 
           className={`border border-gray-200 rounded-3xl px-4 py-3 ${disabled ? 'bg-gray-50' : 'bg-white'}`}
         >
@@ -64,19 +87,29 @@ export function ChatInput({ value, onChange, onSend, disabled, placeholder }: Ch
             </button>
           </div>
           
-          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-100">
+          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-100 relative">
             <button
-              className="text-gray-400 cursor-default"
-              disabled
+              onClick={handlePlusClick}
+              className={`text-gray-400 ${showPlusMenu && !disabled ? 'cursor-pointer hover:text-gray-600' : 'cursor-default'}`}
+              disabled={disabled || !showPlusMenu}
               data-testid="chat-input-plus"
             >
               <Plus className="w-5 h-5" />
             </button>
             
-            <div className="flex items-center gap-2 text-blue-500 text-sm">
-              <ShoppingBag className="w-4 h-4" />
-              <span>Shopping-Assistent</span>
-            </div>
+            {showModeLabel && (
+              <div className="flex items-center gap-2 text-blue-500 text-sm">
+                <ShoppingBag className="w-4 h-4" />
+                <span>Shopping-Assistent</span>
+              </div>
+            )}
+
+            {isPlusMenuOpen && (
+              <ModeSelectionOverlay 
+                onSelectMode={handleModeSelect}
+                onClose={() => setIsPlusMenuOpen(false)}
+              />
+            )}
           </div>
         </div>
         
