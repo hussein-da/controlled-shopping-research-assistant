@@ -5,7 +5,7 @@ export function StartScreen() {
       data-testid="start-screen"
     >
       <h1 className="text-4xl font-normal text-gray-900 mb-8">
-        Wie kann ich dir helfen?
+        Was liegt heute an?
       </h1>
     </div>
   );

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
+import { StatusDisplay } from './status-display';
 
 interface ReviewGateProps {
   onPreviewAndRate: () => void;
@@ -8,25 +9,36 @@ interface ReviewGateProps {
 }
 
 const previewImages = [
-  { id: 1, color: 'bg-amber-100', label: 'Coffee Bundle' },
-  { id: 2, color: 'bg-yellow-50', label: 'Darboven Classic' },
-  { id: 3, color: 'bg-orange-100', label: 'Jacobs & Melitta' },
-  { id: 4, color: 'bg-red-50', label: 'Lavazza Rossa' },
+  { id: 1, label: 'Coffee Machine' },
+  { id: 2, label: 'Coffee Beans' },
+  { id: 3, label: 'Ground Coffee' },
+  { id: 4, label: 'Coffee Pack' },
 ];
 
 export function ReviewGate({ onPreviewAndRate, onSkipAll, timerDuration }: ReviewGateProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [showContent, setShowContent] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    const showTimer = setTimeout(() => {
+      setShowContent(true);
+    }, 1500);
+
+    return () => clearTimeout(showTimer);
+  }, []);
+
+  useEffect(() => {
+    if (!showContent) return;
+
     timerRef.current = setTimeout(() => {
-      onSkipAll();
+      onPreviewAndRate();
     }, timerDuration);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [timerDuration, onSkipAll]);
+  }, [showContent, timerDuration, onPreviewAndRate]);
 
   const handlePreviewClick = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -41,23 +53,31 @@ export function ReviewGate({ onPreviewAndRate, onSkipAll, timerDuration }: Revie
     onSkipAll();
   };
 
+  if (!showContent) {
+    return (
+      <div className="animate-in fade-in duration-300">
+        <StatusDisplay status="Capturing product image" showLoading={true} />
+      </div>
+    );
+  }
+
   return (
     <div 
       className="space-y-4 animate-in fade-in duration-300"
       data-testid="review-gate"
     >
-      <p className="text-sm text-gray-500">Review consideration</p>
+      <StatusDisplay status="Capturing product image" showLoading={false} />
       
-      <div className="border border-gray-200 rounded-2xl p-6">
+      <div className="border border-gray-200 rounded-2xl p-6 bg-white">
         <div className="flex flex-col md:flex-row gap-6">
           <div className="grid grid-cols-2 gap-2 flex-shrink-0">
             {previewImages.map((img) => (
               <div 
                 key={img.id}
-                className={`w-28 h-28 rounded-lg ${img.color} flex items-center justify-center overflow-hidden`}
+                className="w-28 h-28 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden"
               >
-                <div className="text-xs text-gray-500 text-center px-2">
-                  {img.label}
+                <div className="w-16 h-20 bg-amber-100 rounded flex items-center justify-center">
+                  <span className="text-2xl text-amber-500">C</span>
                 </div>
               </div>
             ))}
@@ -71,7 +91,7 @@ export function ReviewGate({ onPreviewAndRate, onSkipAll, timerDuration }: Revie
             <button
               onClick={handlePreviewClick}
               disabled={isLoading}
-              className="w-full bg-gray-900 text-white rounded-full py-3 px-6 font-medium flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors"
+              className="w-full bg-gray-900 text-white rounded-full py-3.5 px-6 font-medium flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors"
               data-testid="preview-and-rate-button"
             >
               Preview and rate

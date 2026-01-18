@@ -24,6 +24,8 @@ export interface ProductCard {
   merchant: string;
   imageUrl: string;
   attributes: Record<string, string>;
+  rating?: string;
+  reviews?: string;
 }
 
 export interface WorkflowAnswers {
@@ -52,53 +54,69 @@ export type AppState =
 export const mockProductCards: ProductCard[] = [
   {
     id: '1',
-    title: 'J.J. Darboven Specialty Melange Finesse',
-    price: '119,90 €',
-    merchant: 'Amazon.de - Amazon.de-Seller',
+    title: 'AROMA Kicco Swiss Edition Portion system Black',
+    price: '149,00 €',
+    merchant: 'macchinearoma',
     imageUrl: '/placeholder-coffee-1.jpg',
+    rating: '4.5',
+    reviews: '234',
     attributes: {
-      'Verpackungsabmessungen': '10,5 x 31 x 30,5 cm; 6 Kilogramm',
-      'Produktbezeichnung': 'Röstkaffee in Bohnen',
-      'Netto-Gewicht': '6 Kilogramm',
-      'Ursprungsland': 'Albanien',
-      'Koffeingehalt': 'Koffeinhaltig',
-      'Form': 'Ganze Bohne',
-      'Röstgrad': 'Mittlere Röstung',
-      'Paketinformationen': 'Tasche',
+      'Marke': 'Aroma',
+      'Kapselmaschine': 'Ja',
+      'Automatisierung': 'Halbautomatisch',
     }
   },
   {
     id: '2',
-    title: 'Lavazza Qualità Rossa Kaffeebohnen',
-    price: '14,99 €',
-    merchant: 'Amazon.de',
+    title: 'Fresh Ground Coffee Pack',
+    price: '7,95 €',
+    merchant: 'Butlers Chocolates UC',
     imageUrl: '/placeholder-coffee-2.jpg',
     attributes: {
-      'Verpackungsabmessungen': '8 x 10 x 25 cm; 1 Kilogramm',
-      'Produktbezeichnung': 'Röstkaffee in Bohnen',
-      'Netto-Gewicht': '1 Kilogramm',
-      'Ursprungsland': 'Italien',
-      'Koffeingehalt': 'Koffeinhaltig',
-      'Form': 'Ganze Bohne',
-      'Röstgrad': 'Mittlere Röstung',
-      'Paketinformationen': 'Vakuumverpackt',
+      'Verpackungsabmessungen': '8 x 10 x 25 cm',
+      'Produktbezeichnung': 'Gemahlener Kaffee',
+      'Netto-Gewicht': '250 Gramm',
     }
   },
   {
     id: '3',
-    title: 'Jacobs Krönung Ganze Bohnen',
-    price: '12,49 €',
-    merchant: 'Amazon.de',
+    title: 'Jacobs Kaffee Krönung',
+    price: '6,82 €',
+    merchant: 'Kaffeehenk',
     imageUrl: '/placeholder-coffee-3.jpg',
+    rating: '4.7',
+    reviews: '4843',
     attributes: {
-      'Verpackungsabmessungen': '9 x 12 x 22 cm; 500 Gramm',
+      'Marke': 'Jacobs',
+      'Verarbeitungsform': 'Gemahlen',
+    }
+  },
+  {
+    id: '4',
+    title: 'Lavazza Qualità Rossa Kaffeebohnen',
+    price: '14,99 €',
+    merchant: 'Amazon.de',
+    imageUrl: '/placeholder-coffee-4.jpg',
+    rating: '4.6',
+    reviews: '12847',
+    attributes: {
       'Produktbezeichnung': 'Röstkaffee in Bohnen',
-      'Netto-Gewicht': '500 Gramm',
-      'Ursprungsland': 'Deutschland',
-      'Koffeingehalt': 'Koffeinhaltig',
+      'Netto-Gewicht': '1 Kilogramm',
+      'Röstgrad': 'Mittlere Röstung',
+    }
+  },
+  {
+    id: '5',
+    title: 'Dallmayr prodomo Ganze Bohnen',
+    price: '18,49 €',
+    merchant: 'Amazon.de',
+    imageUrl: '/placeholder-coffee-5.jpg',
+    rating: '4.8',
+    reviews: '8234',
+    attributes: {
+      'Marke': 'Dallmayr',
       'Form': 'Ganze Bohne',
-      'Röstgrad': 'Leichte Röstung',
-      'Paketinformationen': 'Aromaversiegelt',
+      'Röstgrad': 'Mittlere Röstung',
     }
   }
 ];
