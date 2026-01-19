@@ -8,7 +8,12 @@ interface RejectionDialogProps {
   onSkip: () => void;
 }
 
-const rejectionReasons = ['Price', 'Style', 'Brand', 'Features'];
+const rejectionReasons = [
+  { id: 'price', label: 'Zu teuer' },
+  { id: 'roast', label: 'Röstgrad passt nicht' },
+  { id: 'brand', label: 'Marke unbekannt' },
+  { id: 'features', label: 'Eigenschaften fehlen' },
+];
 
 export function RejectionDialog({ product, onSelectReason, onSkip }: RejectionDialogProps) {
   return (
@@ -32,18 +37,18 @@ export function RejectionDialog({ product, onSelectReason, onSkip }: RejectionDi
 
       <div>
         <h3 className="text-lg font-medium text-gray-900 mb-4">
-          Why don't you like this product?
+          Warum gefällt dir dieses Produkt nicht?
         </h3>
 
         <div className="space-y-2">
           {rejectionReasons.map((reason) => (
             <button
-              key={reason}
-              onClick={() => onSelectReason(reason)}
+              key={reason.id}
+              onClick={() => onSelectReason(reason.id)}
               className="w-full py-3.5 px-4 border border-gray-200 rounded-full text-gray-900 hover:bg-gray-50 hover:border-gray-300 transition-colors text-center"
-              data-testid={`rejection-reason-${reason.toLowerCase().replace(/[^\w]+/g, '-')}`}
+              data-testid={`rejection-reason-${reason.id}`}
             >
-              {reason}
+              {reason.label}
             </button>
           ))}
           
@@ -53,7 +58,7 @@ export function RejectionDialog({ product, onSelectReason, onSkip }: RejectionDi
             data-testid="rejection-reason-something-else"
           >
             <Edit3 className="w-4 h-4" />
-            <span>Something else...</span>
+            <span>Etwas anderes...</span>
           </button>
         </div>
       </div>
