@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -17,6 +17,78 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
+export const studySessions = pgTable("study_sessions", {
+  participantId: varchar("participant_id").primaryKey().default(sql`gen_random_uuid()`),
+  condition: varchar("condition", { length: 20 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  consentGiven: boolean("consent_given").default(false),
+  preSurvey: jsonb("pre_survey"),
+  postSurvey: jsonb("post_survey"),
+  requirements: jsonb("requirements"),
+  productRatings: jsonb("product_ratings"),
+  productsShown: text("products_shown").array(),
+  finalChoice: varchar("final_choice", { length: 50 }),
+  completedAt: timestamp("completed_at"),
+});
+
+export const studyEvents = pgTable("study_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  participantId: varchar("participant_id").notNull(),
+  eventType: varchar("event_type", { length: 50 }).notNull(),
+  eventData: jsonb("event_data"),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
+export const insertSessionSchema = createInsertSchema(studySessions).omit({
+  participantId: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertEventSchema = createInsertSchema(studyEvents).omit({
+  id: true,
+  timestamp: true,
+});
+
+export type InsertSession = z.infer<typeof insertSessionSchema>;
+export type StudySession = typeof studySessions.$inferSelect;
+export type InsertEvent = z.infer<typeof insertEventSchema>;
+export type StudyEvent = typeof studyEvents.$inferSelect;
+
+export type StudyCondition = "baseline" | "nudge";
+
+export interface PreSurvey {
+  age: string;
+  studentStatus: string;
+  onlineShopping: string;
+  llmUsage: string;
+  llmForPurchase: string;
+}
+
+export interface PostSurvey {
+  mc1Highlight: number;
+  mc2ProductRecommended: string;
+  purchaseIntent: number;
+  trust: number;
+  autonomy: number;
+  transparency: number;
+}
+
+export interface RequirementAnswers {
+  budget?: string;
+  roestgrad?: string;
+  merkmal?: string;
+  zubereitung?: string;
+}
+
+export interface ProductRating {
+  productId: string;
+  rating: "interested" | "not_interested";
+  reason?: string;
+  timestamp: number;
+}
+
 export interface ProductCard {
   id: string;
   title: string;
@@ -30,8 +102,9 @@ export interface ProductCard {
 
 export interface WorkflowAnswers {
   budget?: string;
-  aroma?: string;
-  properties?: string[];
+  roestgrad?: string;
+  merkmal?: string;
+  zubereitung?: string;
 }
 
 export interface WorkflowState {
@@ -47,12 +120,22 @@ export type AppState =
   | 'loading'
   | 'starting'
   | 'budget'
-  | 'aroma'
-  | 'properties'
+  | 'roestgrad'
+  | 'merkmal'
+  | 'zubereitung'
   | 'review_gate'
   | 'product_cards'
   | 'transition'
   | 'final_guide';
+
+export type StudyPage = 
+  | 'study_start'
+  | 'consent'
+  | 'pre_survey'
+  | 'task'
+  | 'assistant'
+  | 'post_survey'
+  | 'debrief';
 
 export interface Source {
   id: string;

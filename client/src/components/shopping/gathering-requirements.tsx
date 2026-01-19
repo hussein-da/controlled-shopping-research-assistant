@@ -3,7 +3,7 @@ import { Edit3 } from 'lucide-react';
 import { StatusDisplay } from './status-display';
 
 interface GatheringRequirementsProps {
-  state: 'budget' | 'aroma' | 'properties';
+  state: 'budget' | 'roestgrad' | 'merkmal' | 'zubereitung';
   onSelect: (value: string) => void;
   onSkip: () => void;
   timerDuration: number;
@@ -12,18 +12,23 @@ interface GatheringRequirementsProps {
 
 const questionConfig = {
   budget: {
-    question: 'Budget für eine Packung?',
+    question: 'Budget pro Packung?',
     options: ['Bis 5 €', 'Bis 10 €', 'Bis 20 €', '20 €+'],
     statusPrefix: 'Gathering requirements',
   },
-  aroma: {
-    question: 'Röstungsgrad bevorzugt?',
+  roestgrad: {
+    question: 'Röstgrad?',
     options: ['Hell', 'Mittel', 'Dunkel', 'Entkoffeiniert'],
     statusPrefix: '',
   },
-  properties: {
-    question: 'Wichtige Merkmale?',
+  merkmal: {
+    question: 'Wichtiges Merkmal?',
     options: ['Fairtrade/Bio', 'Ganze Bohnen', 'Gemahlen', 'Besonders aromatisch'],
+    statusPrefix: '',
+  },
+  zubereitung: {
+    question: 'Zubereitungsart?',
+    options: ['Filter', 'Vollautomat', 'French Press', 'Espressokocher'],
     statusPrefix: '',
   },
 };

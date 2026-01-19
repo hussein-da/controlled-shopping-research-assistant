@@ -1,0 +1,168 @@
+Rolle: Senior Full-Stack Engineer. Ziel: Korrigiere und stabilisiere den bestehenden Shopping-Assistant-Prototyp (OpenAI-ähnlich) als deterministische State Machine. Fokus: UI-Replica, korrekte Timings, korrekte Default-Logik, persistenter State (Selections beeinflussen Ergebnis), kein LLM, keine Kürzungen.
+
+TECHNISCHE VORGABEN
+- Stack: Next.js (App Router) + Node API Routes ODER React + Express.
+- Keine externen Web-Requests für Produkte. Alles aus lokalem Produktkorpus (JSON).
+- Deterministisch: gleiche Inputs -> gleicher Output.
+
+A) UI-START (New Chat wie ChatGPT)
+1) Startscreen darf NICHT wie laufender Chat wirken. 
+   - Zentrierte Prompt-Box (wie “Was liegt heute an?” darf NICHT dauerhaft in der Mitte bleiben, sondern ist nur im leeren Chat).
+   - Chatfenster ist wie bei einem gestarteten Chat auch in der mitte direkt unter was liegt heute an. erst bei eingabe und absetzen geht er runter die chatbox wie vorher und der Dialog startet.
+   - Plus-Menü für Mode-Selection.
+   - Erst nach Mode-Selection “Shopping Assistant” wird der Send-Button aktiv.
+2) Prompt-Input ist frei, aber beim Absenden wird IM CHAT IMMER der Studienprompt gespeichert/angezeigt:
+   “Ich möchte Kaffee kaufen. Bitte starte eine Shopping-Recherche.”
+   (Auch wenn Nutzer etwas anderes tippt: beim Absenden wird auf den Studienprompt normalisiert und geloggt.)
+
+B) START-STATUS + DELAY
+1) Nach Absenden 3–4 Sekunden warten.
+2) Dann Statuszeilen anzeigen:
+   - “Starting shopping research …”
+   - danach “Gathering requirements …”
+   Die Statuszeilen bleiben sichtbar, während Requirements erscheinen.
+
+C) REQUIREMENTS-LOOP (4 Fragen, korrekte 20s Timeout-Logik)
+Requirements (genau diese vier, Reihenfolge stabil):
+1) Budget pro Packung: bis 5 / bis 10 / bis 20 / 20+
+2) Röstgrad: hell / mittel / dunkel / entkoffeiniert
+3) Merkmal: Fairtrade/Bio / ganze Bohnen / gemahlen / besonders aromatisch
+4) Zubereitung: Filter / Vollautomat / French Press / Espressokocher
+
+UI-Layout pro Requirement:
+- 2x2 Kacheln für die vier Optionen
+- darunter “Something else”
+- darunter “Skip”
+
+Timing (muss exakt umgesetzt werden):
+- Sekunde 0–10: “Skip” sichtbar, KEIN Ring.
+- Sekunde 10–20: Ring erscheint direkt auf/bei “Skip” und füllt sich sichtbar über 10 Sekunden.
+- Sekunde 20: Auto-Skip -> nächste Requirement.
+Wenn Nutzer klickt:
+- Auswahl speichern (persistenter State)
+- kurz Status “Updating search: <selection>” anzeigen (z.B. “Updating search: bis 20 Euro”)
+- dann zur nächsten Requirement.
+
+D) PREVIEW & RATE GATE (Default zieht rein)
+Nach Requirements:
+- Block: “Give quick feedback to help ChatGPT pick the best options for you”
+- Buttons: “Preview and rate” (primär, schwarz) + “Skip all” (sekundär)
+Wichtig: Inaktivität soll per Countdown zu “Preview and rate” führen (nicht zu Skip all). Und selbe Logik mit dem skip rotator der nach 10 Sekunden kommt und sich ausfüllt, aber er steht nun diesmal neben previw and rate nicht neben skip all.
+
+E) RATING-LOOP
+- Zeige 10 Produkte nacheinander (aus Produktkorpus gefiltert/gerankt).
+- Buttons pro Produkt: “Not interested”, “More like this”, “Skip”
+- “Skip” hat rotierenden Ladeindikator.
+- Bei “Not interested”:
+  Dialog: “Why don’t you like this product?” mit Optionen Price/Style/Brand/Features/Something else
+  Wenn Price gewählt: Status “Clarifying Product Pricing” und danach sichtbar günstigere Produkte priorisieren.
+- “More like this”: ähnliche Produkte priorisieren (z.B. gleiche Röstung/ähnlicher Preis/ähnliches Merkmal).
+
+F) BUYER’S GUIDE (Text darf nicht “zu kurz” sein)
+- Header: “Shopped for Xm · Y products viewed”
+- Tag-Leiste mit den tatsächlich gesetzten Constraints (aus State)
+- Abschnitt “Kurzer Überblick” (Template + Slots)
+- Abschnitt “Beste Gesamtwahl” (Top-Pick)
+  - 3 Bullet-Gründe (aus Produktattributen generiert)
+  - “Trade-offs” (1–2 Bullet)
+- Abschnitt “Weitere starke Picks” (Top-6 insgesamt)
+- Button “View Products” öffnet Liste aller viewed Produkte mit Badges “liked” / “not interested”.
+
+G) DYNAMIK-FIX (dein aktueller Bug)
+- Wenn Budget bis 20 gewählt wurde, darf NICHT im Ergebnis “bis 10” stehen.
+- Constraints müssen:
+  1) Tags beeinflussen,
+  2) Kurzer Überblick beeinflussen,
+  3) Ranking/Top-6 beeinflussen.
+Keine hardcodierten Defaults im Output.
+
+H) AKZEPTANZTESTS (automatisch prüfbar)
+1) Requirement-Timeout: 20s total, Ring ab Sekunde 10.
+2) Preview Gate Default: Inaktivität führt zu Preview and rate.
+3) Budget bis 20 -> Tag + Summary zeigen “bis 20”; Top-6 unterscheidet sich sichtbar von bis 10.
+4) Not interested + Reason=Price -> danach günstigere Kandidaten.
+
+Lieferumfang:
+- Sauberer Code, kommentiert.
+- README: Run, wo Produktkorpus liegt, wie Ranking funktioniert.
+
+-------------
+
+Rolle: Senior Full-Stack Engineer. Aufgabe: Baue um den bestehenden Shopping-Assistant-Flow eine komplette Studienhülle (QR->Landing->Consent->PreSurvey->Task->Chat Flow->PostSurvey->Debrief) mit A/B Randomisierung und persistentem Logging/Export.
+
+WICHTIG: Keine Rechtsberatung, aber datensparsame Umsetzung nach DSGVO-Grundprinzipien (Einwilligung, Transparenz, Pseudonymisierung, keine unnötigen Daten).
+
+1) ROUTING / SEITEN (State Machine)
+- /start: Begrüßung + Button “Studie starten”
+- /consent:
+  - Text: Zweck (UX-Studie zu prototypischem KI-Shopping-Assistenten für Kaffee)
+  - Hinweis: freiwillig, jederzeit Abbruch ohne Nachteile
+  - Hinweis: Speicherung pseudonymisierter Daten zu Forschungszwecken (Bachelorarbeit)
+  - Checkbox A: “Ich bin mindestens 18 Jahre alt.”
+  - Checkbox B: “Ich willige in die Verarbeitung meiner Angaben ein.”
+  - Weiter-Button erst aktiv, wenn beide Checkboxen true
+- /pre:
+  5 Items (Pflicht, außer “keine Angabe”):
+  (P1) Alter: 18–20 / 21–25 / 26–30 / >30 / keine Angabe
+  (P2) Studienstatus: Student:in / nicht Student:in / keine Angabe
+  (P3) Online-Shopping: selten / monatlich / wöchentlich / mehrmals wöchentlich
+  (P4) ChatGPT/LLM Nutzung: nie / selten / monatlich / wöchentlich / täglich
+  (P5) LLM für Kaufrecherche genutzt: ja / nein / unsicher
+- /task:
+  Persona-Story (standardisiert, neutral, ohne “Nudge”):
+  “Stell dir vor: Du möchtest in den nächsten Tagen Kaffee online kaufen. Du nutzt meist einen Vollautomaten. Du willst etwas Alltags-taugliches, Preis-Leistung wichtig. Nutze den Assistenten und wähle am Ende das Produkt, das du am ehesten kaufen würdest.”
+  Button: “Zum Assistenten”
+- /assistant:
+  hier wird der Chat-Flow aus Prompt A eingebettet
+- /post:
+  Manipulation Check + Outcomes:
+  (MC1) Likert 1–7: “Der Assistent hat ein Produkt besonders hervorgehoben/empfohlen.”
+  (MC2) Single choice: “Welches Produkt wirkte am stärksten empfohlen?” (Top-6 + “keins”)
+  (O1) Kaufabsicht 1–7
+  (O2) Vertrauen 1–7
+  (O3) Autonomie 1–7
+  (O4) Transparenz 1–7
+  Submit
+- /debrief:
+  Aufklärung:
+  “In dieser Studie gab es zwei Versionen der Oberfläche. Eine Variante hebt eine Empfehlung stärker hervor. Ziel ist zu untersuchen, wie Darstellungsformen Entscheidungen beeinflussen.”
+  Kontaktfeld (E-Mail Platzhalter) + Hinweis: Datenlöschung auf Anfrage möglich (participant_id angeben).
+
+2) A/B RANDOMISIERUNG
+- Beim ersten Eintritt nach Consent wird condition randomisiert (50/50) und fix gespeichert:
+  condition = “baseline” oder “nudge”
+- Condition beeinflusst ausschließlich:
+  - Buyer’s Guide Top-Pick: Badge/Highlight/1 Satz Framing in condition=nudge
+  - In baseline keine Hervorhebung.
+- Alles andere identisch (Produktkorpus, Reihenfolge, Texte, Logik).
+
+3) PERSISTENTES LOGGING (MUSS)
+- Erzeuge participant_id UUID beim Start.
+- Speichere serverseitig persistent (SQLite oder jsonl append unter /data).
+- Speichere:
+  participant_id, condition, timestamps,
+  consent true/false, pre_survey,
+  alle Flow-Events (requirements shown/answers/timeout, preview gate choice, ratings + reasons),
+  products_shown Reihenfolge, final_top6, choice_product_id,
+  post_survey Antworten.
+- Speichere KEINE Klarnamen, KEINE Matrikelnummer, KEINE IP-Adresse. Keine externen Tracker.
+
+4) ADMIN/EXPORT (für Hörsaal & Auswertung)
+- /admin (simple password env var) zeigt:
+  - Liste aller Records
+  - Download JSONL
+  - Download CSV (flattened) mit Kernvariablen: participant_id, condition, choice, MC1, MC2, Kaufabsicht, Vertrauen, Autonomie, Transparenz, timestamps.
+
+5) UX-ROBUSTHEIT
+- Mobile-first (QR -> Smartphone).
+- “Weiter”-Buttons klar, keine Scroll-Fallen.
+- Bei Reload: participant_id/condition erhalten bleiben (session storage) und serverseitiger Record weiter beschreibbar.
+
+6) AKZEPTANZTESTS
+- Condition bleibt stabil pro participant_id.
+- Post-Survey kann erst nach Buyer’s Guide abgeschlossen werden.
+- Export liefert echte Datenzeilen.
+
+Lieferumfang:
+- Voll lauffähig + README (Start, Admin-Export, Datenformat).
+

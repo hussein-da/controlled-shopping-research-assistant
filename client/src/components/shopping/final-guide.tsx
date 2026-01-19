@@ -11,6 +11,8 @@ interface FinalGuideProps {
   tags?: string[];
   onViewProducts?: () => void;
   onViewSources?: () => void;
+  onProductChoice?: (productId: string) => void;
+  condition?: 'baseline' | 'nudge';
 }
 
 function parseMarkdown(text: string) {
@@ -216,7 +218,9 @@ export function FinalGuide({
   notInterestedCount = 2,
   tags = [],
   onViewProducts,
-  onViewSources
+  onViewSources,
+  onProductChoice,
+  condition = 'baseline'
 }: FinalGuideProps) {
   const content = parseMarkdown(markdown);
 
