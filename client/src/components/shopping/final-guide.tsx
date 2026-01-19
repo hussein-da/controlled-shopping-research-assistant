@@ -223,6 +223,7 @@ export function FinalGuide({
   condition = 'baseline'
 }: FinalGuideProps) {
   const content = parseMarkdown(markdown);
+  const isNudge = condition === 'nudge';
 
   return (
     <div 
@@ -248,6 +249,36 @@ export function FinalGuide({
               {tag}
             </span>
           ))}
+        </div>
+      )}
+
+      {isNudge && (
+        <div 
+          className="mb-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl"
+          data-testid="nudge-top-pick-banner"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-medium text-green-800">Empfehlung für dich</p>
+              <p className="text-sm text-green-700">
+                Basierend auf deinen Präferenzen ist <strong>dmBio Caffè Crema</strong> die beste Wahl.
+              </p>
+            </div>
+            {onProductChoice && (
+              <button
+                onClick={() => onProductChoice('1')}
+                className="ml-auto px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium hover:bg-green-700 transition-colors"
+                data-testid="nudge-select-button"
+              >
+                Auswählen
+              </button>
+            )}
+          </div>
         </div>
       )}
 
