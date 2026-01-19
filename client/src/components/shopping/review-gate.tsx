@@ -15,10 +15,18 @@ const previewImages = [
   { id: 4, label: 'Coffee Pack' },
 ];
 
-export function ReviewGate({ onPreviewAndRate, onSkipAll, timerDuration }: ReviewGateProps) {
+const IDLE_DURATION = 10000;
+const COUNTDOWN_DURATION = 10000;
+
+export function ReviewGate({ onPreviewAndRate, onSkipAll }: ReviewGateProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showContent, setShowContent] = useState(false);
+  const [showRing, setShowRing] = useState(false);
+  const [ringProgress, setRingProgress] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  const animationRef = useRef<number | null>(null);
+  const startTimeRef = useRef<number>(0);
 
   useEffect(() => {
     const showTimer = setTimeout(() => {
@@ -32,16 +40,36 @@ export function ReviewGate({ onPreviewAndRate, onSkipAll, timerDuration }: Revie
     if (!showContent) return;
 
     timerRef.current = setTimeout(() => {
-      onPreviewAndRate();
-    }, timerDuration);
+      setShowRing(true);
+      startTimeRef.current = Date.now();
+      
+      const animate = () => {
+        const elapsed = Date.now() - startTimeRef.current;
+        const progress = Math.min(elapsed / COUNTDOWN_DURATION, 1);
+        setRingProgress(progress);
+        
+        if (progress < 1) {
+          animationRef.current = requestAnimationFrame(animate);
+        }
+      };
+      animationRef.current = requestAnimationFrame(animate);
+      
+      countdownRef.current = setTimeout(() => {
+        onPreviewAndRate();
+      }, COUNTDOWN_DURATION);
+    }, IDLE_DURATION);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (countdownRef.current) clearTimeout(countdownRef.current);
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [showContent, timerDuration, onPreviewAndRate]);
+  }, [showContent, onPreviewAndRate]);
 
   const handlePreviewClick = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    if (countdownRef.current) clearTimeout(countdownRef.current);
+    if (animationRef.current) cancelAnimationFrame(animationRef.current);
     setIsLoading(true);
     setTimeout(() => {
       onPreviewAndRate();
@@ -50,6 +78,8 @@ export function ReviewGate({ onPreviewAndRate, onSkipAll, timerDuration }: Revie
 
   const handleSkipClick = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    if (countdownRef.current) clearTimeout(countdownRef.current);
+    if (animationRef.current) cancelAnimationFrame(animationRef.current);
     onSkipAll();
   };
 
@@ -60,6 +90,9 @@ export function ReviewGate({ onPreviewAndRate, onSkipAll, timerDuration }: Revie
       </div>
     );
   }
+
+  const circumference = 2 * Math.PI * 10;
+  const strokeDashoffset = circumference * (1 - ringProgress);
 
   return (
     <div 
@@ -88,15 +121,45 @@ export function ReviewGate({ onPreviewAndRate, onSkipAll, timerDuration }: Revie
               Give quick feedback to help ChatGPT pick the best options for you.
             </p>
 
-            <button
-              onClick={handlePreviewClick}
-              disabled={isLoading}
-              className="w-full bg-gray-900 text-white rounded-full py-3.5 px-6 font-medium flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors"
-              data-testid="preview-and-rate-button"
-            >
-              Preview and rate
-              {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handlePreviewClick}
+                disabled={isLoading}
+                className="flex-1 bg-gray-900 text-white rounded-full py-3.5 px-6 font-medium flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors"
+                data-testid="preview-and-rate-button"
+              >
+                Preview and rate
+                {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+              </button>
+              
+              {showRing && (
+                <div className="flex-shrink-0" data-testid="countdown-ring">
+                  <svg width="28" height="28" viewBox="0 0 28 28">
+                    <circle
+                      cx="14"
+                      cy="14"
+                      r="10"
+                      fill="none"
+                      stroke="#e5e7eb"
+                      strokeWidth="2.5"
+                    />
+                    <circle
+                      cx="14"
+                      cy="14"
+                      r="10"
+                      fill="none"
+                      stroke="#111827"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={strokeDashoffset}
+                      transform="rotate(-90 14 14)"
+                      style={{ transition: 'stroke-dashoffset 0.1s linear' }}
+                    />
+                  </svg>
+                </div>
+              )}
+            </div>
 
             <button
               onClick={handleSkipClick}
