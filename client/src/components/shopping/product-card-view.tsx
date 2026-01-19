@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Check, ChevronRight, ArrowDown, Star } from 'lucide-react';
-import { ProductCard } from '@shared/schema';
+import { Product } from '@shared/schema';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { StatusDisplay } from './status-display';
 import { RejectionDialog } from './rejection-dialog';
 import { ProductDetailModal } from './product-detail-modal';
 
 interface ProductCardViewProps {
-  product: ProductCard;
+  product: Product;
   onNotInterested: (reason?: string) => void;
   onMoreLikeThis: () => void;
   onTimeout: () => void;
@@ -83,7 +83,17 @@ export function ProductCardView({
     );
   }
 
-  const displayStatus = statusText || (isFirstProduct ? 'Searching for options' : `Finding more like ${product.title.split(' ').slice(0, 3).join(' ')}`);
+  const displayStatus = statusText || (isFirstProduct ? 'Searching for options' : `Finding more like ${product.name.split(' ').slice(0, 3).join(' ')}`);
+  const priceFormatted = `${product.price_eur.toFixed(2).replace('.', ',')} €`;
+
+  const attributes: Record<string, string> = {
+    'Röstung': product.roast,
+    'Bio/Fairtrade': product.bio_fair ? 'Ja' : 'Nein',
+    'Ganze Bohnen': product.whole_beans ? 'Ja' : 'Nein',
+    'Packungsgröße': `${product.pack_g}g`,
+    'Geschmacksnoten': product.tasting_notes.join(', '),
+    'Lieferzeit': product.shipping_days,
+  };
 
   return (
     <div 
@@ -114,33 +124,21 @@ export function ProductCardView({
               className="flex items-start justify-between mb-1 w-full text-left group"
             >
               <h3 className="text-lg font-medium text-gray-900 pr-4 group-hover:underline" data-testid="product-title">
-                {product.title}
+                {product.name}
               </h3>
               <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0 mt-1" />
             </button>
 
             <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-              <span>{product.price}</span>
-              <span>•</span>
-              <span>{product.merchant}</span>
-              {product.rating && (
-                <>
-                  <span>•</span>
-                  <div className="flex items-center gap-1">
-                    <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
-                    <span>{product.rating}</span>
-                    {product.reviews && (
-                      <span className="text-gray-400">({product.reviews} reviews)</span>
-                    )}
-                  </div>
-                </>
-              )}
+              <span>{priceFormatted}</span>
+              <span>·</span>
+              <span>{product.brand}</span>
             </div>
 
             <ScrollArea className="h-44">
               <table className="w-full text-sm">
                 <tbody>
-                  {Object.entries(product.attributes).map(([key, value]) => (
+                  {Object.entries(attributes).map(([key, value]) => (
                     <tr key={key} className="border-b border-gray-100 last:border-0">
                       <td className="py-2.5 pr-4 text-gray-500 font-medium align-top whitespace-nowrap">
                         {key}

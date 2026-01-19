@@ -10,6 +10,8 @@ import Consent from "@/pages/consent";
 import PreSurvey from "@/pages/pre-survey";
 import Task from "@/pages/task";
 import ShoppingResearch from "@/pages/shopping-research";
+import Guide from "@/pages/guide";
+import Choice from "@/pages/choice";
 import PostSurvey from "@/pages/post-survey";
 import Debrief from "@/pages/debrief";
 import Admin from "@/pages/admin";
@@ -20,10 +22,12 @@ function Router() {
       <Route path="/" component={StudyStart} />
       <Route path="/start" component={StudyStart} />
       <Route path="/consent" component={Consent} />
-      <Route path="/pre-survey" component={PreSurvey} />
+      <Route path="/pre" component={PreSurvey} />
       <Route path="/task" component={Task} />
       <Route path="/assistant" component={ShoppingResearch} />
-      <Route path="/post-survey" component={PostSurvey} />
+      <Route path="/guide" component={Guide} />
+      <Route path="/choice" component={Choice} />
+      <Route path="/post" component={PostSurvey} />
       <Route path="/debrief" component={Debrief} />
       <Route path="/admin" component={Admin} />
     </Switch>

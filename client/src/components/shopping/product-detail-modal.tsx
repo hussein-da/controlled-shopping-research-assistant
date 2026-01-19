@@ -1,38 +1,16 @@
 import { useState } from 'react';
-import { X, ChevronLeft, Star } from 'lucide-react';
-import { ProductCard } from '@shared/schema';
+import { X, ChevronLeft } from 'lucide-react';
+import { Product } from '@shared/schema';
 
 interface ProductDetailModalProps {
-  product: ProductCard;
+  product: Product;
   onClose: () => void;
 }
 
 export function ProductDetailModal({ product, onClose }: ProductDetailModalProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const thumbnails = [1, 2, 3, 4, 5];
-
-  const renderStars = (rating: string) => {
-    const ratingNum = parseFloat(rating);
-    const fullStars = Math.floor(ratingNum);
-    const hasHalfStar = ratingNum % 1 >= 0.5;
-    
-    return (
-      <div className="flex items-center gap-0.5">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <Star 
-            key={i}
-            className={`w-4 h-4 ${
-              i <= fullStars 
-                ? 'text-yellow-400 fill-yellow-400' 
-                : i === fullStars + 1 && hasHalfStar
-                  ? 'text-yellow-400 fill-yellow-400/50'
-                  : 'text-gray-300'
-            }`}
-          />
-        ))}
-      </div>
-    );
-  };
+  const priceFormatted = `${product.price_eur.toFixed(2).replace('.', ',')} €`;
 
   return (
     <div 
@@ -92,7 +70,7 @@ export function ProductDetailModal({ product, onClose }: ProductDetailModalProps
         <div className="p-6 border-t border-gray-100">
           <div className="flex items-start justify-between gap-4 mb-3">
             <h2 className="text-xl font-medium text-gray-900">
-              {product.title}
+              {product.name}
             </h2>
             <button
               className="px-4 py-2 border border-gray-200 rounded-full text-gray-700 hover:bg-gray-50 transition-colors flex-shrink-0 text-sm font-medium"
@@ -102,26 +80,19 @@ export function ProductDetailModal({ product, onClose }: ProductDetailModalProps
             </button>
           </div>
 
-          {product.rating && (
-            <div className="flex items-center gap-2 mb-3">
-              {renderStars(product.rating)}
-              <span className="text-sm text-gray-600">
-                {product.rating} ({product.reviews || '0'})
-              </span>
-            </div>
-          )}
-
           <p className="text-sm text-gray-500 mb-4">
-            {product.merchant} · {product.price}
+            {product.brand} · {priceFormatted}
           </p>
 
           <div className="space-y-3">
-            <h3 className="font-medium text-gray-900">Description</h3>
+            <h3 className="font-medium text-gray-900">Beschreibung</h3>
+            <ul className="text-gray-600 text-sm leading-relaxed space-y-1">
+              {product.short_bullets.map((bullet, idx) => (
+                <li key={idx}>• {bullet}</li>
+              ))}
+            </ul>
             <p className="text-gray-600 text-sm leading-relaxed">
-              Seit mehr als 50 Jahren präsentiert sich {product.title.split(' ')[0]} als einer der beliebtesten 
-              Filterkaffees der Deutschen und begeistert die Kaffeegenießer durch das unverwechselbare 
-              Verwöhnaroma. Wir widmen dem Verwöhnaroma unsere gesamte Leidenschaft. Das Geheimnis des 
-              Kaffee-Aromas liegt in der besonderen Auswahl und schonenden Röstung der Bohnen.
+              Geschmacksnoten: {product.tasting_notes.join(', ')}
             </p>
           </div>
         </div>

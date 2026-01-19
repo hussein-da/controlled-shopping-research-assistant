@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'wouter';
-import { AppState, WorkflowState, mockProductCards, mockSources, finalGuideMarkdown } from '@shared/schema';
+import { 
+  AppState, 
+  WorkflowState, 
+  WorkflowAnswers,
+  products, 
+  STUDY_PROMPT, 
+  NORMALIZED_TARGET,
+  ProductRating,
+  DeviationFlags,
+  RequirementAnswers
+} from '@shared/schema';
 import { useStudy } from '@/lib/study-context';
 import { Sidebar } from '@/components/shopping/sidebar';
 import { Topbar } from '@/components/shopping/topbar';
@@ -10,23 +20,20 @@ import { UserMessage } from '@/components/shopping/user-message';
 import { GatheringRequirements } from '@/components/shopping/gathering-requirements';
 import { ReviewGate } from '@/components/shopping/review-gate';
 import { ProductCardView } from '@/components/shopping/product-card-view';
-import { FinalGuide } from '@/components/shopping/final-guide';
 import { TransitionScreen } from '@/components/shopping/transition-screen';
-import { AllProductsModal } from '@/components/shopping/all-products-modal';
-import { SourcesPanel } from '@/components/shopping/sources-panel';
 import { LoadingDots, StatusDisplay } from '@/components/shopping/status-display';
 
 const TIMER_DURATION = 20000;
 const PRODUCT_TIMER_DURATION = 15000;
-const STUDY_PROMPT = 'Ich möchte Kaffee kaufen. Bitte starte eine Shopping-Recherche.';
 
 export default function ShoppingResearch() {
   const [, setLocation] = useLocation();
-  const { session, updateRequirements, submitRating, logEvent, setFinalChoice } = useStudy();
+  const { session, updateRequirements, submitRating, logEvent } = useStudy();
   
   const [appState, setAppState] = useState<AppState>('start');
   const [workflowState, setWorkflowState] = useState<WorkflowState>({
     userPrompt: '',
+    userTypedPrompt: '',
     answers: {},
     currentProductIndex: 0,
     productRatings: {},
@@ -35,11 +42,8 @@ export default function ShoppingResearch() {
   const [isInputDisabled, setIsInputDisabled] = useState(false);
   const [previousSelection, setPreviousSelection] = useState<string | undefined>(undefined);
   const [productStatus, setProductStatus] = useState<string>('');
-  const [showAllProductsModal, setShowAllProductsModal] = useState(false);
-  const [showSourcesPanel, setShowSourcesPanel] = useState(false);
   const [shoppingModeSelected, setShoppingModeSelected] = useState(false);
   const [startTime, setStartTime] = useState<number>(0);
-  const [elapsedTime, setElapsedTime] = useState<string>('3m');
 
   const handleModeSelect = useCallback((mode: string) => {
     if (mode === 'shopping') {
@@ -50,7 +54,7 @@ export default function ShoppingResearch() {
 
   const handleSendMessage = useCallback(() => {
     if (!isInputDisabled && shoppingModeSelected) {
-      setWorkflowState(prev => ({ ...prev, userPrompt: STUDY_PROMPT }));
+      setWorkflowState(prev => ({ ...prev, userPrompt: STUDY_PROMPT, userTypedPrompt: inputValue }));
       setIsInputDisabled(true);
       setAppState('loading');
       setStartTime(Date.now());
@@ -61,54 +65,99 @@ export default function ShoppingResearch() {
       }, 800);
       
       setTimeout(() => {
-        setAppState('budget');
+        setAppState('r1_budget');
         setPreviousSelection(undefined);
       }, 3500);
     }
-  }, [isInputDisabled, shoppingModeSelected, logEvent]);
+  }, [isInputDisabled, shoppingModeSelected, inputValue, logEvent]);
 
-  const handleBudgetSelect = useCallback((value: string) => {
-    setWorkflowState(prev => ({ ...prev, answers: { ...prev.answers, budget: value } }));
-    setPreviousSelection(value);
-    updateRequirements({ ...workflowState.answers, budget: value });
-    logEvent('requirement_answered', { question: 'budget', answer: value });
-    setAppState('roestgrad');
+  const computeDeviationFlags = (answers: WorkflowAnswers): DeviationFlags => {
+    return {
+      r1_deviated: !answers.r1_budget?.includes(NORMALIZED_TARGET.budget),
+      r2_deviated: !answers.r2_roast?.includes(NORMALIZED_TARGET.roast),
+      r3_deviated: !answers.r3_grind?.includes(NORMALIZED_TARGET.grind),
+      r4_deviated: !answers.r4_attributes?.includes(NORMALIZED_TARGET.attributes),
+    };
+  };
+
+  const handleR1BudgetSelect = useCallback((values: string[]) => {
+    const newAnswers = { ...workflowState.answers, r1_budget: values };
+    setWorkflowState(prev => ({ ...prev, answers: newAnswers }));
+    setPreviousSelection(values.join(', '));
+    
+    const requirementAnswers: RequirementAnswers = {
+      r1_budget: values,
+      r2_roast: newAnswers.r2_roast || [],
+      r3_grind: newAnswers.r3_grind || [],
+      r4_attributes: newAnswers.r4_attributes || [],
+    };
+    const deviations = computeDeviationFlags(newAnswers);
+    updateRequirements(requirementAnswers, deviations);
+    logEvent('requirement_answered', { question: 'r1_budget', answer: values });
+    setAppState('r2_roast');
   }, [workflowState.answers, updateRequirements, logEvent]);
 
-  const handleRoestgradSelect = useCallback((value: string) => {
-    setWorkflowState(prev => ({ ...prev, answers: { ...prev.answers, roestgrad: value } }));
-    setPreviousSelection(value);
-    updateRequirements({ ...workflowState.answers, roestgrad: value });
-    logEvent('requirement_answered', { question: 'roestgrad', answer: value });
-    setAppState('merkmal');
+  const handleR2RoastSelect = useCallback((values: string[]) => {
+    const newAnswers = { ...workflowState.answers, r2_roast: values };
+    setWorkflowState(prev => ({ ...prev, answers: newAnswers }));
+    setPreviousSelection(values.join(', '));
+    
+    const requirementAnswers: RequirementAnswers = {
+      r1_budget: newAnswers.r1_budget || [],
+      r2_roast: values,
+      r3_grind: newAnswers.r3_grind || [],
+      r4_attributes: newAnswers.r4_attributes || [],
+    };
+    const deviations = computeDeviationFlags(newAnswers);
+    updateRequirements(requirementAnswers, deviations);
+    logEvent('requirement_answered', { question: 'r2_roast', answer: values });
+    setAppState('r3_grind');
   }, [workflowState.answers, updateRequirements, logEvent]);
 
-  const handleMerkmalSelect = useCallback((value: string) => {
-    setWorkflowState(prev => ({ ...prev, answers: { ...prev.answers, merkmal: value } }));
-    setPreviousSelection(value);
-    updateRequirements({ ...workflowState.answers, merkmal: value });
-    logEvent('requirement_answered', { question: 'merkmal', answer: value });
-    setAppState('zubereitung');
+  const handleR3GrindSelect = useCallback((values: string[]) => {
+    const newAnswers = { ...workflowState.answers, r3_grind: values };
+    setWorkflowState(prev => ({ ...prev, answers: newAnswers }));
+    setPreviousSelection(values.join(', '));
+    
+    const requirementAnswers: RequirementAnswers = {
+      r1_budget: newAnswers.r1_budget || [],
+      r2_roast: newAnswers.r2_roast || [],
+      r3_grind: values,
+      r4_attributes: newAnswers.r4_attributes || [],
+    };
+    const deviations = computeDeviationFlags(newAnswers);
+    updateRequirements(requirementAnswers, deviations);
+    logEvent('requirement_answered', { question: 'r3_grind', answer: values });
+    setAppState('r4_attributes');
   }, [workflowState.answers, updateRequirements, logEvent]);
 
-  const handleZubereitungSelect = useCallback((value: string) => {
-    setWorkflowState(prev => ({ ...prev, answers: { ...prev.answers, zubereitung: value } }));
-    setPreviousSelection(value);
-    updateRequirements({ ...workflowState.answers, zubereitung: value });
-    logEvent('requirement_answered', { question: 'zubereitung', answer: value });
+  const handleR4AttributesSelect = useCallback((values: string[]) => {
+    const newAnswers = { ...workflowState.answers, r4_attributes: values };
+    setWorkflowState(prev => ({ ...prev, answers: newAnswers }));
+    setPreviousSelection(values.join(', '));
+    
+    const requirementAnswers: RequirementAnswers = {
+      r1_budget: newAnswers.r1_budget || [],
+      r2_roast: newAnswers.r2_roast || [],
+      r3_grind: newAnswers.r3_grind || [],
+      r4_attributes: values,
+    };
+    const deviations = computeDeviationFlags(newAnswers);
+    updateRequirements(requirementAnswers, deviations);
+    logEvent('requirement_answered', { question: 'r4_attributes', answer: values });
     setAppState('review_gate');
   }, [workflowState.answers, updateRequirements, logEvent]);
 
   const handleSkip = useCallback(() => {
     setPreviousSelection(undefined);
     logEvent('requirement_skipped', { question: appState });
-    if (appState === 'budget') {
-      setAppState('roestgrad');
-    } else if (appState === 'roestgrad') {
-      setAppState('merkmal');
-    } else if (appState === 'merkmal') {
-      setAppState('zubereitung');
-    } else if (appState === 'zubereitung') {
+    if (appState === 'r1_budget') {
+      setAppState('r2_roast');
+    } else if (appState === 'r2_roast') {
+      setAppState('r3_grind');
+    } else if (appState === 'r3_grind') {
+      setAppState('r4_attributes');
+    } else if (appState === 'r4_attributes') {
       setAppState('review_gate');
     }
   }, [appState, logEvent]);
@@ -125,20 +174,27 @@ export default function ShoppingResearch() {
     setAppState('transition');
   }, [logEvent]);
 
-  const handleProductRating = useCallback((rating: 'interested' | 'not_interested', reason?: string) => {
-    const currentProduct = mockProductCards[workflowState.currentProductIndex];
+  const handleProductRating = useCallback((action: 'more_like_this' | 'not_interested', reason?: string) => {
+    const currentProduct = products[workflowState.currentProductIndex];
     const currentId = currentProduct?.id;
     
     if (currentId) {
-      if (rating === 'interested') {
-        setProductStatus(`Finding more like ${currentProduct.title.split(' ').slice(0, 3).join(' ')}`);
-      } else if (reason === 'Price') {
+      if (action === 'more_like_this') {
+        setProductStatus(`Finding more like ${currentProduct.name.split(' ').slice(0, 3).join(' ')}`);
+      } else if (reason === 'price') {
         setProductStatus('Clarifying product pricing');
       } else {
         setProductStatus('Searching for alternatives');
       }
 
-      submitRating(currentId, rating, reason);
+      const rating: ProductRating = {
+        productId: currentId,
+        action,
+        reason,
+        timestamp: Date.now(),
+      };
+      
+      submitRating(rating);
       
       setWorkflowState(prev => ({
         ...prev,
@@ -149,7 +205,7 @@ export default function ShoppingResearch() {
   }, [workflowState.currentProductIndex, submitRating]);
 
   const handleNextProduct = useCallback(() => {
-    if (workflowState.currentProductIndex < mockProductCards.length - 1) {
+    if (workflowState.currentProductIndex < products.length - 1) {
       setWorkflowState(prev => ({
         ...prev,
         currentProductIndex: prev.currentProductIndex + 1,
@@ -160,36 +216,17 @@ export default function ShoppingResearch() {
   }, [workflowState.currentProductIndex]);
 
   const handleTransitionComplete = useCallback(() => {
-    const elapsed = Math.floor((Date.now() - startTime) / 60000);
-    setElapsedTime(`${Math.max(elapsed, 3)}m`);
     logEvent('transition_complete');
-    setAppState('final_guide');
-  }, [startTime, logEvent]);
-
-  const handleProductChoice = useCallback((productId: string) => {
-    setFinalChoice(productId);
-    logEvent('final_choice_made', { productId });
-    setLocation('/post-survey');
-  }, [setFinalChoice, logEvent, setLocation]);
+    setLocation('/guide');
+  }, [logEvent, setLocation]);
 
   useEffect(() => {
-    if (workflowState.currentProductIndex >= mockProductCards.length && appState === 'product_cards') {
+    if (workflowState.currentProductIndex >= products.length && appState === 'product_cards') {
       setAppState('transition');
     }
   }, [workflowState.currentProductIndex, appState]);
 
-  const likedCount = Object.values(workflowState.productRatings).filter(r => r === 'interested').length;
-  const notInterestedCount = Object.values(workflowState.productRatings).filter(r => r === 'not_interested').length;
   const productsViewed = workflowState.currentProductIndex;
-
-  const generateTags = () => {
-    const tags = ['Kaffee'];
-    const { budget, roestgrad, merkmal, zubereitung } = workflowState.answers;
-    if (merkmal) tags.push(merkmal);
-    if (zubereitung) tags.push(zubereitung);
-    if (budget) tags.push(budget);
-    return tags;
-  };
 
   const renderContent = () => {
     if (appState === 'start') {
@@ -208,14 +245,14 @@ export default function ShoppingResearch() {
           <StatusDisplay status="Starting shopping research" showLoading={true} />
         )}
 
-        {(appState === 'budget' || appState === 'roestgrad' || appState === 'merkmal' || appState === 'zubereitung') && (
+        {(appState === 'r1_budget' || appState === 'r2_roast' || appState === 'r3_grind' || appState === 'r4_attributes') && (
           <GatheringRequirements
             state={appState}
             onSelect={
-              appState === 'budget' ? handleBudgetSelect :
-              appState === 'roestgrad' ? handleRoestgradSelect :
-              appState === 'merkmal' ? handleMerkmalSelect :
-              handleZubereitungSelect
+              appState === 'r1_budget' ? handleR1BudgetSelect :
+              appState === 'r2_roast' ? handleR2RoastSelect :
+              appState === 'r3_grind' ? handleR3GrindSelect :
+              handleR4AttributesSelect
             }
             onSkip={handleSkip}
             timerDuration={TIMER_DURATION}
@@ -231,11 +268,11 @@ export default function ShoppingResearch() {
           />
         )}
 
-        {appState === 'product_cards' && workflowState.currentProductIndex < mockProductCards.length && (
+        {appState === 'product_cards' && workflowState.currentProductIndex < products.length && (
           <ProductCardView
-            product={mockProductCards[workflowState.currentProductIndex]}
+            product={products[workflowState.currentProductIndex]}
             onNotInterested={(reason) => handleProductRating('not_interested', reason)}
-            onMoreLikeThis={() => handleProductRating('interested')}
+            onMoreLikeThis={() => handleProductRating('more_like_this')}
             onTimeout={handleNextProduct}
             timerDuration={PRODUCT_TIMER_DURATION}
             statusText={productStatus}
@@ -247,21 +284,6 @@ export default function ShoppingResearch() {
           <TransitionScreen
             onComplete={handleTransitionComplete}
             productsViewed={productsViewed || 10}
-          />
-        )}
-
-        {appState === 'final_guide' && (
-          <FinalGuide 
-            markdown={finalGuideMarkdown}
-            elapsedTime={elapsedTime}
-            productsViewed={productsViewed || 13}
-            likedCount={likedCount || 8}
-            notInterestedCount={notInterestedCount || 2}
-            tags={generateTags()}
-            onViewProducts={() => setShowAllProductsModal(true)}
-            onViewSources={() => setShowSourcesPanel(true)}
-            onProductChoice={session ? handleProductChoice : undefined}
-            condition={session?.condition || 'baseline'}
           />
         )}
       </div>
@@ -316,27 +338,6 @@ export default function ShoppingResearch() {
           </>
         )}
       </div>
-
-      {showAllProductsModal && (
-        <AllProductsModal
-          products={mockProductCards}
-          ratings={workflowState.productRatings}
-          onClose={() => setShowAllProductsModal(false)}
-        />
-      )}
-
-      {showSourcesPanel && (
-        <>
-          <div 
-            className="fixed inset-0 bg-black/20 z-40"
-            onClick={() => setShowSourcesPanel(false)}
-          />
-          <SourcesPanel
-            sources={mockSources}
-            onClose={() => setShowSourcesPanel(false)}
-          />
-        </>
-      )}
     </div>
   );
 }

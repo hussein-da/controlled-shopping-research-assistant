@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { mockProductCards } from '@shared/schema';
+import { products } from '@shared/schema';
 import { StatusDisplay } from './status-display';
 
 interface TransitionScreenProps {
@@ -31,7 +31,7 @@ export function TransitionScreen({ onComplete, productsViewed }: TransitionScree
     requestAnimationFrame(animate);
 
     const imageInterval = setInterval(() => {
-      setCurrentImageIndex(prev => (prev + 1) % Math.min(productsViewed, mockProductCards.length));
+      setCurrentImageIndex(prev => (prev + 1) % Math.min(productsViewed, products.length));
     }, 800);
 
     return () => {
@@ -39,7 +39,7 @@ export function TransitionScreen({ onComplete, productsViewed }: TransitionScree
     };
   }, [onComplete, productsViewed]);
 
-  const displayProduct = mockProductCards[currentImageIndex];
+  const displayProduct = products[currentImageIndex];
 
   return (
     <div 

@@ -1,0 +1,627 @@
+Du bist ein Senior Full-Stack Engineer. Baue eine lauffähige, studie-taugliche Web-App (Next.js App Router + TypeScript + SQLite). Ziel: kontrollierter „Shopping Research Assistant“ (OpenAI-ähnlicher Flow) für eine Bachelorstudie, inklusive Pre-/Post-Survey, A/B-Randomisierung (Guide-Variante), Pseudonymisierung, Logging und Export.
+
+WICHTIG (harte Constraints):
+1) Keine externen Webrequests, kein Scraping, kein LLM. Alles deterministisch.
+2) Produktdaten sind fiktional (Marken/Produktnamen/Bilder), keine echten Shops/Links.
+3) Datensparsamkeit: keine Klarnamen, keine Standortdaten, keine IP-Speicherung, keine Tracker.
+4) Nutzer dürfen klicken (auch abweichend), aber der finale Guide-Output ist kontrolliert:
+   - Die Studie arbeitet mit fixen Zielkriterien (siehe Task-Screen). 
+   - Abweichende Klicks werden geloggt, aber für die Empfehlung werden die Zielkriterien verwendet.
+
+------------------------------------------------------------
+A) ROUTES / SCREENFLOW (State Machine)
+------------------------------------------------------------
+Routen:
+- /start
+- /consent
+- /pre
+- /task
+- /assistant
+- /guide
+- /choice
+- /post
+- /debrief
+- /admin (passwortgeschützt, Export)
+
+Global:
+- Bei /start wird participant_id (UUID v4) erzeugt und in HttpOnly-Cookie + DB gespeichert.
+- Nach erfolgreichem Consent wird condition randomisiert (50/50): "A_OPENAI_GUIDE" oder "B_NEUTRAL_GUIDE"
+- condition bleibt fix pro participant_id.
+
+------------------------------------------------------------
+B) UI-DESIGN (leichtgewichtig, aber sauber)
+------------------------------------------------------------
+- Mobile-first (QR-Nutzung im Hörsaal).
+- Saubere Typography, Cards, Buttons.
+- Kaffee-Theme: dezenter Hintergrund (Gradient), optional Hero-Image (public/hero-coffee.jpg).
+- Produktbilder liegen lokal in /public/products/*.jpg
+
+Klares Labeling (Deutsch, konsistent):
+- Buttons: "Weiter", "Zurück", "Abbrechen", "Fortfahren", "Auswählen"
+- Fortschritt oben: "Schritt X von Y"
+
+------------------------------------------------------------
+C) START / CONSENT / KONTAKTANGABEN (Text exakt so verwenden)
+------------------------------------------------------------
+/start:
+Titel: "Studie: KI-gestützte Kaufberatung (Kaffee)"
+Text:
+"Diese kurze Studie ist Teil einer Bachelorarbeit im Studiengang E-Commerce (Hochschule Ruhr West).
+Dauer: ca. 5–8 Minuten. Teilnahme ist freiwillig."
+Button: "Studie starten" -> /consent
+
+/consent:
+Titel: "Einwilligung und Hinweise"
+Textblöcke:
+1) Zweck:
+"Im Rahmen einer Bachelorarbeit wird ein prototypischer KI-Shopping-Assistent evaluiert. Sie bearbeiten eine kurze Kaufaufgabe und beantworten anschließend Fragen zur wahrgenommenen Nutzerführung und zur Entscheidung."
+2) Freiwilligkeit:
+"Die Teilnahme ist freiwillig. Sie können jederzeit abbrechen, ohne dass Ihnen Nachteile entstehen."
+3) Datenschutz (keine Rechtsberatung, aber datensparsam):
+"Es werden ausschließlich pseudonymisierte Angaben gespeichert (zufällige Teilnehmer-ID, Klicks im Prototyp, Fragebogenantworten). Es werden keine Klarnamen, keine Standortdaten und keine IP-Adressen gespeichert. Die Daten werden ausschließlich für Forschungszwecke im Rahmen der Bachelorarbeit genutzt."
+4) Kontakt:
+"Studienleitung: Hussein Daoud (B.Sc. E-Commerce, Hochschule Ruhr West)
+E-Mail: hussein.daoud@stud.hs-ruhrwest.de"
+
+Checkboxen (beide Pflicht):
+[ ] "Ich bin mindestens 18 Jahre alt."
+[ ] "Ich willige in die Verarbeitung meiner Angaben für Forschungszwecke ein."
+Button "Weiter" erst aktiv, wenn beide Checkboxen true -> /pre
+Button "Abbrechen" -> /debrief (mit Abbruchtext, ohne Survey)
+
+/debrief (Abbruch-Variante):
+Titel: "Abbruch"
+Text: "Sie haben die Studie abgebrochen. Es werden keine weiteren Angaben erhoben."
+Hinweis Kontakt wie oben.
+
+------------------------------------------------------------
+D) PRE-SURVEY (Kohorte) – Felder und Formate
+------------------------------------------------------------
+/pre:
+Titel: "Kurze Vorabfragen"
+Hinweis: "Bitte beantworten Sie die folgenden Fragen. Sie können bei sensiblen Angaben 'keine Angabe' wählen."
+
+Items (mit Speicherung):
+P1 Alter:
+- 18–20
+- 21–25
+- 26–30
+- >30
+- keine Angabe
+
+P2 Studienstatus:
+- Student:in
+- nicht Student:in
+- keine Angabe
+
+P3 Studiengang (optional Freitext, max 60 Zeichen)
+
+P4 Online-Shopping Häufigkeit:
+- selten
+- monatlich
+- wöchentlich
+- mehrmals wöchentlich
+
+P5 Kaffee-Kaufhäufigkeit:
+- selten
+- monatlich
+- wöchentlich
+- mehrmals wöchentlich
+
+P6 Kaffee-Know-how (Likert 1–7):
+"Ich kenne mich mit Kaffeeprodukten gut aus."
+(1 = stimme gar nicht zu, 7 = stimme voll zu)
+
+P7 LLM-Nutzung:
+- nie
+- selten
+- wöchentlich
+- täglich
+
+P8 LLM für Kaufrecherche genutzt:
+- ja
+- nein
+- unsicher
+
+P9 Ranking-Affinität (Likert 1–7):
+"Vergleichstabellen und Rankings helfen mir beim Kauf."
+
+Buttons:
+- "Weiter" -> /task
+- "Zurück" -> /consent
+
+------------------------------------------------------------
+E) TASK-SCREEN (Standardisierung) – Text exakt so
+------------------------------------------------------------
+/task:
+Titel: "Aufgabe"
+Visueller Bereich: Kaffee-Hintergrund + Card.
+
+Text (wichtig, nicht das Wort 'Nudge' verwenden):
+"Stellen Sie sich vor: Sie möchten in den nächsten Tagen Kaffee online kaufen.
+Bitte nutzen Sie den Prototypen wie beschrieben.
+
+Ihre Zielkriterien für diese Aufgabe:
+- Packungsgröße: 250 g
+- Budget: bis 12 €
+- Nachhaltigkeit: Bio/Fairtrade
+- Mahlart: ganze Bohnen
+- Nutzung: Vollautomat
+
+Ihre Aufgabe:
+1) Wählen Sie im Prototyp den Modus 'Shopping Assistant'.
+2) Kopieren Sie den folgenden Prompt und senden Sie ihn ab:
+   'Ich möchte Kaffee kaufen. Bitte starte eine Shopping-Recherche.'
+3) Klicken Sie sich durch die Schritte. Danach erhalten Sie einen Bericht (Guide).
+   Nehmen Sie sich so viel Zeit zum Lesen wie Sie möchten.
+4) Wenn Sie fertig sind, klicken Sie im Guide auf 'Weiter'."
+
+Button: "Zum Prototyp" -> /assistant
+
+------------------------------------------------------------
+F) ASSISTANT-FLOW (OpenAI-ähnliche Interaktion, aber kontrolliert)
+------------------------------------------------------------
+/assistant:
+Ziel: UI wirkt OpenAI-nah, aber implementierbar.
+
+UI-Layout:
+- Header: "Shopping Assistant"
+- Mode-Auswahl (Dropdown/Modal): "Shopping Assistant" muss gewählt werden
+- Prompt-Eingabe (zentriert im leeren Zustand)
+- Send-Button aktiv nur bei gewähltem Mode.
+
+Prompt-Normalisierung:
+- Egal was Nutzer tippt: beim Absenden wird intern und im Chat die Studienphrase verwendet:
+  "Ich möchte Kaffee kaufen. Bitte starte eine Shopping-Recherche."
+- Logge zusätzlich user_typed_prompt (falls abweichend) als raw string.
+
+Nach Send:
+- Zeige Status: "Starting Shopping Research …" (2.5 Sekunden)
+- Danach: "Gathering requirements …"
+
+Requirements (4 Schritte, Multi-Select erlaubt, aber Zielkriterien sind fix):
+R1 Budget für 250 g:
+- bis 8 €
+- bis 12 €
+- bis 20 €
+- 20 € plus
+R2 Röstung:
+- hell
+- mittel
+- dunkel
+- entkoffeiniert
+R3 Mahlart:
+- ganze Bohnen
+- Filter gemahlen
+- Espresso gemahlen
+- Pads
+- Kapseln
+R4 Attribute:
+- Bio/Fairtrade
+- schneller Versand
+- säurearm
+- Single Origin
+
+Interaktion:
+- Nutzer kann mehrere Optionen anklicken (toggle).
+- Button: "Continue"
+- Optional: "Something else" (Textfeld, nicht erforderlich)
+- Optional: "Skip"
+
+Kontrolllogik (wichtig):
+- Speichere die tatsächlichen Klicks pro Schritt.
+- Zusätzlich speichere normalized_target = immer:
+  Budget=bis 12 €, Röstung=hell, Mahlart=ganze Bohnen, Attribute=Bio/Fairtrade, Nutzung=Vollautomat (Nutzung kommt nicht als Schritt, wird im Tag später gesetzt).
+- Der spätere Guide nutzt ausschließlich normalized_target (damit Ergebnis konstant bleibt).
+- Wenn Nutzer nicht die Zieloption gewählt hat, darf die UI trotzdem weitergehen (kein harter Abbruch). Logge deviation_flags pro Schritt.
+
+Nach R4:
+Gate-Screen:
+Titel: "Give a quick feedback to help pick the best options for you."
+Buttons:
+- Primär: "Preview and rate"
+- Sekundär: "Skip"
+
+Preview & Rate (10 Produkte nacheinander, aus local dataset):
+Für jedes Produkt zeige Bild, Name, Preis, kurze Bulletpoints.
+Buttons:
+- "More like this"
+- "Not interested"
+- "Skip"
+Bei "Not interested": zeige Gründe (Single choice):
+- Price
+- Taste profile
+- Sustainability
+- Brand/Trust
+- Something else (Freitext)
+Diese Ratings beeinflussen NICHT den finalen Guide (Guide bleibt kontrolliert), werden aber geloggt (für Explorationsauswertung).
+
+Nach 10 Produkten:
+Status: "Thanks for the feedback. Final recommendation will be ready soon."
+(1.5 Sekunden)
+Dann -> /guide
+
+------------------------------------------------------------
+G) GUIDE-SEITE (A/B-Manipulation sitzt hier)
+------------------------------------------------------------
+/guide:
+- Zeige Tags oben (immer die Zielkriterien):
+Tags: "250 g", "bis 12 €", "Bio/Fairtrade", "ganze Bohnen", "Vollautomat", "hell"
+
+- Darunter wird abhängig von condition einer von zwei fixen Markdown-Texten gerendert:
+  condition A_OPENAI_GUIDE => GUIDE_TEXT_A
+  condition B_NEUTRAL_GUIDE => GUIDE_TEXT_B
+
+- Am Ende immer:
+Button "Weiter" (führt zu /choice)
+Logge guide_view_start_ts und guide_continue_ts => guide_read_seconds.
+
+WICHTIG:
+- Der Choice-Screen ist in beiden Bedingungen identisch neutral (keine Hervorhebung).
+
+------------------------------------------------------------
+H) CHOICE-SCREEN (primäres Outcome)
+------------------------------------------------------------
+/choice:
+Titel: "Entscheidung"
+Text: "Welches Produkt würden Sie am ehesten kaufen?"
+Zeige 6 Karten (Top-6), gleiche Größe, gleiche Reihenfolge, ohne Badges:
+- Produktbild
+- Produktname
+- Preis (250 g)
+- 2 neutrale Bulletpoints (z. B. Röstung, Bio/Fair)
+Button pro Karte: "Auswählen"
+
+Option: "Keines davon" (Radio oder extra Button)
+
+Nach Auswahl:
+- Speichere choice_product_id
+- Speichere choice_timestamp
+- Weiter -> /post
+
+------------------------------------------------------------
+I) POST-SURVEY (detailliert, an Mechaniken gekoppelt)
+------------------------------------------------------------
+/post:
+Titel: "Kurze Abschlussfragen"
+Skalenhinweis: "1 = stimme gar nicht zu, 7 = stimme voll zu"
+
+Manipulation Checks (MC):
+MC1 Likert 1–7:
+"Ein Produkt wurde im Bericht klar als 'beste Wahl' oder ähnlich dargestellt."
+MC2 Likert 1–7:
+"Ein Produkt wirkte deutlich stärker empfohlen als die anderen."
+MC3 Single Choice:
+"Welches Produkt wirkte am stärksten empfohlen?"
+(Top-6 Produktnamen + "keins")
+MC4 Likert 1–7:
+"Ich habe den Bericht aufmerksam gelesen."
+
+Wahrnehmung von Mechanismen (N-Items, Likert 1–7):
+N1 "Die Oberfläche hat meine Auswahl stark vorstrukturiert."
+N2 "Ich empfand die Schritte als zeitlich drängend."
+N3 "Nicht zu klicken (z. B. Skip/Weiter) fühlte sich wie die schlechtere Option an."
+N4 "Die Budgetstufen haben meine Preisvorstellung beeinflusst."
+N5 "Die Feedback-Buttons ('More like this' / 'Not interested') gaben mir Kontrolle."
+N6 "Statusmeldungen (z. B. 'Starting', 'Final recommendation') wirkten kompetent."
+N7 "Die reduzierte Auswahl (nur wenige Picks) hat mir die Entscheidung erleichtert."
+N8 "Die Begründungen wirkten wie eine normative Empfehlung (nicht nur Information)."
+N9 "Eine Vergleichstabelle hat meine Entscheidung beeinflusst."
+N10 "Ich hätte mehr Filter/Optionen gebraucht, um gut zu entscheiden."
+
+Outcomes (O-Items, Likert 1–7):
+O1 Kaufabsicht: "Wie wahrscheinlich würden Sie das gewählte Produkt kaufen?"
+O2 Entscheidungssicherheit: "Ich bin sicher, dass meine Wahl passend ist."
+O3 Vertrauen: "Ich vertraue der Empfehlung des Assistenten."
+O4 Autonomie: "Ich hatte das Gefühl, frei und selbstbestimmt zu entscheiden."
+O5 Transparenz: "Ich konnte nachvollziehen, warum diese Produkte empfohlen wurden."
+O6 Zufriedenheit: "Insgesamt war die Beratung hilfreich."
+
+Offene/Diagnose:
+O7 Freitext (optional, max 300 Zeichen):
+"Was war der wichtigste Grund für Ihre Wahl?"
+O8 Multi-Checkbox:
+"Was hat Sie am stärksten beeinflusst?"
+Optionen:
+- Preis
+- Bio/Fairtrade
+- Röstung / Geschmacksprofil
+- Begründungstext im Bericht
+- Vergleichstabelle
+- Produktbild
+- UI-Struktur / Reihenfolge
+- Sonstiges (Freitext)
+
+Buttons:
+- "Absenden" -> /debrief
+
+------------------------------------------------------------
+J) DEBRIEF (Aufklärung)
+------------------------------------------------------------
+/debrief:
+Titel: "Vielen Dank!"
+Text:
+"Vielen Dank für Ihre Teilnahme.
+Hinweis zur Studie: Es gab zwei Varianten des Berichts (Guide). In einer Variante wurde eine Option stärker als beste Wahl dargestellt, in der anderen Variante wurden die Optionen neutraler präsentiert. Ziel ist zu untersuchen, wie Darstellungsformen Entscheidungen beeinflussen.
+
+Kontakt:
+Studienleitung: Hussein Daoud (Hochschule Ruhr West)
+E-Mail: hussein.dout@stud.hs-ruhrwest.de
+
+Wenn Sie Fragen haben oder eine Löschung Ihrer Angaben wünschen, nennen Sie bitte Ihre Teilnehmer-ID:"
+Zeige participant_id (copy button)
+
+------------------------------------------------------------
+K) DATENMODELL / PSEUDONYMISIERUNG / SPEICHERLOGIK
+------------------------------------------------------------
+SQLite Datenbank (Prisma oder better-sqlite3; bevorzugt Prisma):
+Tabelle participants:
+- participant_id TEXT PRIMARY KEY
+- condition TEXT NOT NULL
+- created_at TEXT (ISO)
+- consent_age BOOLEAN
+- consent_data BOOLEAN
+- pre_answers_json TEXT
+- guide_read_seconds INTEGER
+- choice_product_id TEXT
+- post_answers_json TEXT
+- completed_at TEXT (ISO, nullable)
+
+Tabelle events (feingranular):
+- id INTEGER PRIMARY KEY AUTOINCREMENT
+- participant_id TEXT (FK)
+- ts TEXT (ISO)
+- event_type TEXT
+- payload_json TEXT
+
+Event logging (mindestens):
+- page_view (/route)
+- prompt_sent (raw typed + normalized)
+- requirement_step (selected_options, something_else_text, deviation_flag)
+- rating_action (product_id, action, reason)
+- guide_view_start / guide_continue
+- choice_made
+- post_submit
+
+KEINE Speicherung:
+- keine IP, keine User-Agent-Strings in DB (optional nur in Memory).
+- keine Klarnamen.
+
+------------------------------------------------------------
+L) ADMIN / EXPORT
+------------------------------------------------------------
+/admin:
+- Basic Auth oder Passwort via ENV ADMIN_PASSWORD.
+Funktionen:
+1) Liste der Datensätze (participant_id, condition, completed, choice)
+2) Export JSONL:
+   pro participant ein JSON-Objekt (participants row + aggregierte events)
+3) Export CSV (flattened):
+   participant_id, condition, guide_read_seconds, choice_product_id,
+   zentrale Pre- und Post-Items als Spalten.
+
+------------------------------------------------------------
+M) PRODUKTKORPUS (FIKTIONAL) – JSON (lokal in /data/products.json)
+------------------------------------------------------------
+Erstelle 10 Produkte (alle 250 g), davon Top-6 (IDs P01–P06) erfüllen die Zielkriterien:
+- Preis <= 12 €
+- Bio/Fair = true
+- whole_beans = true
+- roast = light
+- suitable_for = ["vollautomat"]
+
+Die restlichen 4 (P07–P10) sind plausible Distraktoren (z. B. teurer, nicht Bio/Fair, andere Röstung).
+Jedes Produkt:
+- id
+- name
+- brand
+- price_eur
+- pack_g
+- roast
+- bio_fair (boolean)
+- whole_beans (boolean)
+- tasting_notes (array)
+- shipping_days (string)
+- short_bullets (array, 3 bullets)
+- image_path (string: /products/P01.jpg etc.)
+
+Vorschlag Produktdaten (implementiere exakt):
+P01 "Lunaro Vale – Andes Light" | Brand: Lunaro Vale | 9.90 | bio_fair true | notes: "Kakao", "Zitrus", "Vanille"
+P02 "Kafira Studio – Bloom 250" | Brand: Kafira Studio | 10.40 | notes: "Jasmin", "Honig", "Bergamotte"
+P03 "Sombra Verde – Alto Claro" | Brand: Sombra Verde | 8.95 | notes: "Karamell", "Mandarine", "Haselnuss"
+P04 "Nuvana Roasters – Bright Origin" | Brand: Nuvana | 11.80 | notes: "Maracuja", "Schokolade", "Blüte"
+P05 "Orienta Co-op – Fair Select" | Brand: Orienta Co-op | 7.90 | notes: "Nuss", "Mild", "Toffee"
+P06 "Cerro Lumo – Filter Light" | Brand: Cerro Lumo | 10.95 | notes: "Apfel", "Nougat", "Karamell"
+
+Distraktoren:
+P07 "Noir Dock – Dark Crew" | 9.50 | roast dark | bio_fair false
+P08 "Cápsula Nova – Light Pods" | 6.50 | whole_beans false | pods
+P09 "Aurum Peak – Micro Lot" | 16.90 | price > 12
+P10 "DecaLune – Soft Decaf" | 12.50 | decaf | price slightly > 12
+
+------------------------------------------------------------
+N) GUIDE-TEXTE (A/B) – Markdown als Strings (fix, lokal, keine Links)
+------------------------------------------------------------
+
+GUIDE_TEXT_A (OpenAI-ähnlich / nudge-reich):
+- Muss enthalten:
+  - Titel
+  - Kurzfassung (1–2 Absätze)
+  - Abschnitt "Bestes Gesamtpaket" (klarer Favorit = P01)
+  - 3 Bullet-Gründe + Trade-offs + "Für wen ideal"
+  - Vergleichstabelle (Top-6)
+  - "Weitere sehr gute Picks" (P02–P06 jeweils mit kurzer Begründung + Trade-offs)
+  - "Auswahlhilfe: Welche Packung zuerst?"
+  - Hinweise (Säure vs Körper, ganze Bohnen, Bio/Fair)
+
+Verwende folgenden Text (genau, nicht kürzen):
+
+# Gute, bezahlbare Kaffees für den sofortigen Kauf (Prototyp)
+
+## Kurzfassung
+Sie suchen Kaffee als ganze Bohnen für den Vollautomaten, hell geröstet, Bio/Fairtrade, 250 g, und bis 12 €. Unter diesen Kriterien lassen sich mehrere passende Optionen unterscheiden. Der Bericht priorisiert eine besonders stimmige Gesamtwahl und nennt fünf weitere Alternativen, die nur kleine Kompromisse verlangen (z. B. Lieferzeit oder Geschmacksprofil).
+
+## Bestes Gesamtpaket (Empfehlung)
+**Lunaro Vale – Andes Light (P01)**
+
+**Warum diese Wahl am besten zu Ihren Kriterien passt**
+- **Passgenauigkeit:** 250 g, ganze Bohnen, hell geröstet, Bio/Fairtrade, geeignet für Vollautomaten und klar unter 12 €.
+- **Geschmacksprofil (hell & klar):** Noten von Kakao, Zitrus und Vanille – frisch, aber nicht aggressiv; ideal als Alltagskaffee im Vollautomaten.
+- **Guter Kompromiss aus Preis und Qualität:** Mit 9,90 € bleibt die Wahl deutlich im Budget, ohne dass typische Nachhaltigkeits- oder Qualitätsmarker fehlen.
+
+**Trade-offs**
+- **Helle Röstung kann lebendiger wirken:** Wer sehr „klassisch-dunkel“ sucht, empfindet das Profil eventuell als zu leicht.
+- **Single-Origin-Stil ist weniger „uniform“:** Leichte Schwankungen im Aromaeindruck sind möglich (typisch für hellere Profile).
+
+**Für wen ideal**
+Wenn Sie einen hellen, nachhaltigen Alltagskaffee als ganze Bohnen für den Vollautomaten möchten, ohne das Budget zu sprengen, ist P01 die robusteste Gesamtwahl.
+
+---
+
+## Vergleichstabelle (Top-6)
+| Produkt | Preis (250 g) | Röstung | Bio/Fair | Bohnen | Vollautomat | Notizen |
+|---|---:|---|---|---|---|---|
+| P01 Lunaro Vale – Andes Light | 9,90 € | hell | ja | ja | ja | „Bestes Gesamtpaket“ |
+| P02 Kafira Studio – Bloom 250 | 10,40 € | hell | ja | ja | ja | floraler, etwas heller |
+| P03 Sombra Verde – Alto Claro | 8,95 € | hell | ja | ja | ja | günstiger, karamellig |
+| P04 Nuvana – Bright Origin | 11,80 € | hell | ja | ja | ja | fruchtiger, „special“ |
+| P05 Orienta Co-op – Fair Select | 7,90 € | hell | ja | ja | ja | mild, sehr preiswert |
+| P06 Cerro Lumo – Filter Light | 10,95 € | hell | ja | ja | ja | ausgewogen, leicht süß |
+
+---
+
+## Weitere sehr gute Picks
+
+### P02 Kafira Studio – Bloom 250
+**Stärken**
+- Sehr helles, florales Profil (Jasmin/Honig/Bergamotte), wirkt „leichter“ als P01.
+- Gute Wahl, wenn Sie ein klareres, modern-helles Profil bevorzugen.
+**Trade-offs**
+- Florale Noten polarisieren; manche bevorzugen mehr „Kakao/Körper“.
+
+### P03 Sombra Verde – Alto Claro
+**Stärken**
+- Sehr gutes Preis-Leistungs-Verhältnis; karamellig-nussiger als viele helle Profile.
+- Stabiler Alltagskaffee, wenn Budget besonders wichtig ist.
+**Trade-offs**
+- Weniger aromatisch-komplex als P04; dafür unkomplizierter.
+
+### P04 Nuvana – Bright Origin
+**Stärken**
+- Fruchtigere, „special“-artige Noten (Maracuja/Blüte) – spannend, wenn Sie Abwechslung wollen.
+- Liegt am oberen Budgetrand, aber bleibt unter 12 €.
+**Trade-offs**
+- Kann „zu fruchtig“ wirken, wenn Sie sehr klassische Profile mögen.
+
+### P05 Orienta Co-op – Fair Select
+**Stärken**
+- Sehr günstige Bio/Fair-Option; mild, toffee-nussig, sehr alltagstauglich.
+**Trade-offs**
+- Mildheit kann als „weniger charakterstark“ wahrgenommen werden.
+
+### P06 Cerro Lumo – Filter Light
+**Stärken**
+- Ausgewogen (Apfel/Nougat/Karamell), gute „Mitte“ zwischen P01 und P02.
+**Trade-offs**
+- Weniger klarer Favorit; eher „sicher“, nicht maximal auffällig.
+
+---
+
+## Auswahlhilfe: Welche Packung zuerst?
+1. **Wenn Sie die sicherste Gesamtwahl wollen:** P01.
+2. **Wenn Sie etwas floraler/heller wollen:** P02.
+3. **Wenn Preis besonders wichtig ist:** P05 oder P03.
+4. **Wenn Sie bewusst etwas „besonderes“ wollen:** P04.
+5. **Wenn Sie eine ausgewogene Alternative suchen:** P06.
+
+## Hinweise zum Umgang mit Kompromissen
+- **Helle Röstung vs. Körper:** Helle Profile wirken frischer und leichter; dunklere wirken kräftiger, sind hier aber nicht Ziel.
+- **Ganze Bohnen:** Bleiben länger frisch, passen gut für Vollautomaten.
+- **Bio/Fair:** Zertifikate sind ein pragmatischer Nachhaltigkeitsanker, ersetzen aber keine vollständige Lieferkettentransparenz.
+
+Am Ende führt die Wahl von P01 am konsistentesten zu Ihren Zielkriterien.
+
+GUIDE_TEXT_B (Neutraler Guide / de-nudged):
+- Keine Wörter wie "bestes", "Empfehlung", "ideal", "Top", "Favorit".
+- Keine Rangreihenfolge, keine Hervorhebung. Gleichlange Abschnitte je Produkt.
+- Struktur:
+  - Titel
+  - kurzer neutraler Hinweis
+  - Tabelle
+  - 6 gleichformatige Produktkacheln (je 3 bullets)
+  - kurzer Abschluss
+
+Verwende folgenden Text (genau, nicht kürzen):
+
+# Sechs passende Kaffeeoptionen (neutral dargestellt)
+
+## Überblick
+Die folgenden sechs Optionen erfüllen die Zielkriterien dieser Aufgabe (250 g, bis 12 €, Bio/Fairtrade, ganze Bohnen, geeignet für Vollautomaten, helle Röstung). Die Darstellung ist neutral gehalten: keine Rangfolge, gleiche Informationsmenge pro Option.
+
+## Vergleichstabelle
+| Produkt | Preis (250 g) | Bio/Fair | Bohnen | Röstung | Geschmacksnotizen |
+|---|---:|---|---|---|---|
+| P01 Lunaro Vale – Andes Light | 9,90 € | ja | ja | hell | Kakao, Zitrus, Vanille |
+| P02 Kafira Studio – Bloom 250 | 10,40 € | ja | ja | hell | Jasmin, Honig, Bergamotte |
+| P03 Sombra Verde – Alto Claro | 8,95 € | ja | ja | hell | Karamell, Mandarine, Haselnuss |
+| P04 Nuvana – Bright Origin | 11,80 € | ja | ja | hell | Maracuja, Schokolade, Blüte |
+| P05 Orienta Co-op – Fair Select | 7,90 € | ja | ja | hell | Nuss, mild, Toffee |
+| P06 Cerro Lumo – Filter Light | 10,95 € | ja | ja | hell | Apfel, Nougat, Karamell |
+
+## Optionen (gleich dargestellt)
+
+### P01 Lunaro Vale – Andes Light
+- 9,90 € / 250 g; Bio/Fairtrade; ganze Bohnen
+- Helle Röstung; geeignet für Vollautomaten
+- Noten: Kakao, Zitrus, Vanille
+
+### P02 Kafira Studio – Bloom 250
+- 10,40 € / 250 g; Bio/Fairtrade; ganze Bohnen
+- Helle Röstung; geeignet für Vollautomaten
+- Noten: Jasmin, Honig, Bergamotte
+
+### P03 Sombra Verde – Alto Claro
+- 8,95 € / 250 g; Bio/Fairtrade; ganze Bohnen
+- Helle Röstung; geeignet für Vollautomaten
+- Noten: Karamell, Mandarine, Haselnuss
+
+### P04 Nuvana – Bright Origin
+- 11,80 € / 250 g; Bio/Fairtrade; ganze Bohnen
+- Helle Röstung; geeignet für Vollautomaten
+- Noten: Maracuja, Schokolade, Blüte
+
+### P05 Orienta Co-op – Fair Select
+- 7,90 € / 250 g; Bio/Fairtrade; ganze Bohnen
+- Helle Röstung; geeignet für Vollautomaten
+- Noten: Nuss, mild, Toffee
+
+### P06 Cerro Lumo – Filter Light
+- 10,95 € / 250 g; Bio/Fairtrade; ganze Bohnen
+- Helle Röstung; geeignet für Vollautomaten
+- Noten: Apfel, Nougat, Karamell
+
+## Abschluss
+Bitte wählen Sie anschließend eine Option aus, die Sie am ehesten kaufen würden.
+
+------------------------------------------------------------
+O) ASSET-LISTE (Bilder, lokal)
+------------------------------------------------------------
+Lege diese Platzhalterbilder an (10 Pflicht):
+/public/products/P01.jpg ... /P10.jpg
+Optional:
+/public/hero-coffee.jpg
+
+------------------------------------------------------------
+P) AKZEPTANZTESTS (müssen in README dokumentiert werden)
+------------------------------------------------------------
+1) condition ist pro participant_id stabil.
+2) Guide-Text A und B unterscheiden sich ausschließlich in Darstellungssprache/Struktur, nicht in Produktfakten.
+3) Choice-Screen ist in A und B identisch neutral.
+4) Export CSV enthält: participant_id, condition, guide_read_seconds, choice_product_id, MC1..MC4, O1..O6, zentrale Pre-Items.
+5) Keine externen Requests im Code.
+
+Lieferumfang:
+- Lauffähige Next.js App
+- SQLite/Prisma Setup
+- README mit Start + Admin Export
+- Beispiel-Exportdateien (leer)

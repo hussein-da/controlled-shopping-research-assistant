@@ -1,16 +1,16 @@
 import { X, Check } from 'lucide-react';
-import { ProductCard } from '@shared/schema';
+import { Product, ProductRating } from '@shared/schema';
 
 interface AllProductsModalProps {
-  products: ProductCard[];
-  ratings: Record<string, 'interested' | 'not_interested' | null>;
+  products: Product[];
+  ratings: Record<string, ProductRating>;
   onClose: () => void;
-  onProductClick?: (product: ProductCard) => void;
+  onProductClick?: (product: Product) => void;
 }
 
 export function AllProductsModal({ products, ratings, onClose, onProductClick }: AllProductsModalProps) {
-  const likedCount = Object.values(ratings).filter(r => r === 'interested').length;
-  const notInterestedCount = Object.values(ratings).filter(r => r === 'not_interested').length;
+  const likedCount = Object.values(ratings).filter(r => r.action === 'more_like_this').length;
+  const notInterestedCount = Object.values(ratings).filter(r => r.action === 'not_interested').length;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" data-testid="all-products-modal">
@@ -37,7 +37,8 @@ export function AllProductsModal({ products, ratings, onClose, onProductClick }:
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {products.map((product) => {
               const rating = ratings[product.id];
-              const isLiked = rating === 'interested';
+              const isLiked = rating?.action === 'more_like_this';
+              const priceFormatted = `${product.price_eur.toFixed(2).replace('.', ',')} €`;
               
               return (
                 <div 
@@ -60,10 +61,10 @@ export function AllProductsModal({ products, ratings, onClose, onProductClick }:
                   </div>
                   
                   <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-1 group-hover:text-blue-600 transition-colors">
-                    {product.title}
+                    {product.name}
                   </h3>
                   <p className="text-sm text-gray-500">
-                    {product.price} · {product.merchant}
+                    {priceFormatted} · {product.brand}
                   </p>
                 </div>
               );

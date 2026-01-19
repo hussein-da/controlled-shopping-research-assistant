@@ -1,34 +1,35 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Edit3 } from 'lucide-react';
 import { StatusDisplay } from './status-display';
+import { REQUIREMENT_OPTIONS } from '@shared/schema';
 
 interface GatheringRequirementsProps {
-  state: 'budget' | 'roestgrad' | 'merkmal' | 'zubereitung';
-  onSelect: (value: string) => void;
+  state: 'r1_budget' | 'r2_roast' | 'r3_grind' | 'r4_attributes';
+  onSelect: (values: string[]) => void;
   onSkip: () => void;
   timerDuration: number;
   previousSelection?: string;
 }
 
 const questionConfig = {
-  budget: {
+  r1_budget: {
     question: 'Budget pro Packung?',
-    options: ['Bis 5 €', 'Bis 10 €', 'Bis 20 €', '20 €+'],
+    options: REQUIREMENT_OPTIONS.r1_budget,
     statusPrefix: 'Gathering requirements',
   },
-  roestgrad: {
-    question: 'Röstgrad?',
-    options: ['Hell', 'Mittel', 'Dunkel', 'Entkoffeiniert'],
+  r2_roast: {
+    question: 'Röstung?',
+    options: REQUIREMENT_OPTIONS.r2_roast,
     statusPrefix: '',
   },
-  merkmal: {
-    question: 'Wichtiges Merkmal?',
-    options: ['Fairtrade/Bio', 'Ganze Bohnen', 'Gemahlen', 'Besonders aromatisch'],
+  r3_grind: {
+    question: 'Mahlart?',
+    options: REQUIREMENT_OPTIONS.r3_grind,
     statusPrefix: '',
   },
-  zubereitung: {
-    question: 'Zubereitungsart?',
-    options: ['Filter', 'Vollautomat', 'French Press', 'Espressokocher'],
+  r4_attributes: {
+    question: 'Wichtige Attribute?',
+    options: REQUIREMENT_OPTIONS.r4_attributes,
     statusPrefix: '',
   },
 };
@@ -44,7 +45,7 @@ export function GatheringRequirements({
   previousSelection
 }: GatheringRequirementsProps) {
   const [progress, setProgress] = useState(0);
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [showCountdown, setShowCountdown] = useState(false);
   const [showContinue, setShowContinue] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -66,7 +67,7 @@ export function GatheringRequirements({
 
   useEffect(() => {
     setProgress(0);
-    setSelectedOption(null);
+    setSelectedOptions([]);
     setShowCountdown(false);
     setShowContinue(false);
 
@@ -96,16 +97,24 @@ export function GatheringRequirements({
     };
   }, [state, onSkip, clearAllTimers]);
 
-  const handleSelect = (option: string) => {
+  const handleSelect = (optionValue: string) => {
     clearAllTimers();
-    setSelectedOption(option);
-    setShowContinue(true);
+    setSelectedOptions(prev => {
+      if (prev.includes(optionValue)) {
+        const newSelection = prev.filter(v => v !== optionValue);
+        setShowContinue(newSelection.length > 0);
+        return newSelection;
+      } else {
+        setShowContinue(true);
+        return [...prev, optionValue];
+      }
+    });
     setShowCountdown(false);
   };
 
   const handleContinue = () => {
-    if (selectedOption) {
-      onSelect(selectedOption);
+    if (selectedOptions.length > 0) {
+      onSelect(selectedOptions);
     }
   };
 
@@ -133,25 +142,25 @@ export function GatheringRequirements({
       <div className="grid grid-cols-2 gap-3" data-testid="options-grid">
         {config.options.map((option) => (
           <button
-            key={option}
-            onClick={() => handleSelect(option)}
+            key={option.value}
+            onClick={() => handleSelect(option.value)}
             className={`flex items-center gap-3 px-4 py-3.5 border rounded-full transition-all ${
-              selectedOption === option
+              selectedOptions.includes(option.value)
                 ? 'border-gray-300 bg-gray-100'
                 : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
             }`}
-            data-testid={`option-${option.toLowerCase().replace(/[^\w]+/g, '-')}`}
+            data-testid={`option-${option.value.toLowerCase().replace(/[^\w]+/g, '-')}`}
           >
             <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-              selectedOption === option ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+              selectedOptions.includes(option.value) ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
             }`}>
-              {selectedOption === option && (
+              {selectedOptions.includes(option.value) && (
                 <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
                   <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               )}
             </div>
-            <span className="text-gray-900 text-left">{option}</span>
+            <span className="text-gray-900 text-left">{option.label}</span>
           </button>
         ))}
       </div>

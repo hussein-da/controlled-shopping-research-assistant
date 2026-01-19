@@ -17,8 +17,12 @@ export default function Consent() {
   const handleContinue = async () => {
     if (!canContinue) return;
     setIsSubmitting(true);
-    await giveConsent();
-    setLocation('/pre-survey');
+    await giveConsent(isAdult, consentsToData);
+    setLocation('/pre');
+  };
+
+  const handleAbort = () => {
+    setLocation('/debrief?aborted=true');
   };
 
   if (!session) {
@@ -32,44 +36,45 @@ export default function Consent() {
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-4 py-8">
       <div className="max-w-lg space-y-8">
-        <div className="space-y-4">
-          <h1 className="text-2xl font-semibold text-gray-900">
-            Einwilligung zur Studienteilnahme
-          </h1>
-          <p className="text-gray-600">
-            Bitte lies dir die folgenden Informationen durch und bestätige deine Einwilligung.
-          </p>
+        <div className="mb-4 text-sm text-gray-500">
+          Schritt 2 von 9
         </div>
 
-        <div className="bg-gray-50 rounded-xl p-6 space-y-4 text-sm text-gray-700">
+        <div className="space-y-4">
+          <h1 className="text-2xl font-semibold text-gray-900">
+            Einwilligung und Hinweise
+          </h1>
+        </div>
+
+        <div className="bg-gray-50 rounded-xl p-6 space-y-5 text-sm text-gray-700">
           <div>
-            <h3 className="font-medium text-gray-900 mb-2">Zweck der Studie</h3>
+            <h3 className="font-medium text-gray-900 mb-2">Zweck</h3>
             <p>
-              Diese Studie untersucht die Nutzererfahrung mit einem prototypischen KI-Shopping-Assistenten für Kaffee. Sie ist Teil einer Bachelorarbeit an einer deutschen Hochschule.
+              Im Rahmen einer Bachelorarbeit wird ein prototypischer KI-Shopping-Assistent evaluiert. Sie bearbeiten eine kurze Kaufaufgabe und beantworten anschließend Fragen zur wahrgenommenen Nutzerführung und zur Entscheidung.
             </p>
           </div>
 
           <div>
             <h3 className="font-medium text-gray-900 mb-2">Freiwilligkeit</h3>
             <p>
-              Die Teilnahme ist vollständig freiwillig. Du kannst die Studie jederzeit ohne Angabe von Gründen abbrechen, ohne dass dir Nachteile entstehen.
+              Die Teilnahme ist freiwillig. Sie können jederzeit abbrechen, ohne dass Ihnen Nachteile entstehen.
             </p>
           </div>
 
           <div>
             <h3 className="font-medium text-gray-900 mb-2">Datenschutz</h3>
             <p>
-              Alle Daten werden pseudonymisiert gespeichert und ausschließlich zu Forschungszwecken verwendet. Es werden keine personenbezogenen Daten wie Name, E-Mail-Adresse oder IP-Adresse erhoben.
+              Es werden ausschließlich pseudonymisierte Angaben gespeichert (zufällige Teilnehmer-ID, Klicks im Prototyp, Fragebogenantworten). Es werden keine Klarnamen, keine Standortdaten und keine IP-Adressen gespeichert. Die Daten werden ausschließlich für Forschungszwecke im Rahmen der Bachelorarbeit genutzt.
             </p>
           </div>
 
           <div>
             <h3 className="font-medium text-gray-900 mb-2">Kontakt</h3>
             <p>
-              Bei Fragen oder für eine nachträgliche Löschung deiner Daten kannst du dich unter Angabe deiner Teilnehmer-ID an den Studienleiter wenden.
+              Studienleitung: Hussein Daoud (B.Sc. E-Commerce, Hochschule Ruhr West)
             </p>
-            <p className="mt-2 font-mono text-xs text-gray-500">
-              Deine Teilnehmer-ID: {session.participantId}
+            <p>
+              E-Mail: hussein.daoud@stud.hs-ruhrwest.de
             </p>
           </div>
         </div>
@@ -95,23 +100,34 @@ export default function Consent() {
               data-testid="consent-data"
             />
             <label htmlFor="consent" className="text-sm text-gray-700 cursor-pointer">
-              Ich willige in die Verarbeitung meiner Angaben zu Forschungszwecken ein.
+              Ich willige in die Verarbeitung meiner Angaben für Forschungszwecke ein.
             </label>
           </div>
         </div>
 
-        <Button
-          size="lg"
-          onClick={handleContinue}
-          disabled={!canContinue || isSubmitting}
-          className="w-full"
-          data-testid="consent-continue-button"
-        >
-          {isSubmitting ? (
-            <Loader2 className="w-4 h-4 animate-spin mr-2" />
-          ) : null}
-          Weiter
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={handleAbort}
+            className="flex-1"
+            data-testid="consent-abort-button"
+          >
+            Abbrechen
+          </Button>
+          <Button
+            size="lg"
+            onClick={handleContinue}
+            disabled={!canContinue || isSubmitting}
+            className="flex-1"
+            data-testid="consent-continue-button"
+          >
+            {isSubmitting ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : null}
+            Weiter
+          </Button>
+        </div>
       </div>
     </div>
   );

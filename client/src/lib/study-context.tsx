@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import type { StudySession, StudyCondition, PreSurvey, PostSurvey, RequirementAnswers } from '@shared/schema';
-import { apiRequest } from './queryClient';
+import type { StudySession, PreSurvey, PostSurvey, RequirementAnswers, DeviationFlags, ProductRating } from '@shared/schema';
 
 interface StudyContextType {
   session: StudySession | null;
@@ -8,12 +7,14 @@ interface StudyContextType {
   error: string | null;
   initSession: () => Promise<void>;
   loadSession: (participantId: string) => Promise<void>;
-  giveConsent: () => Promise<void>;
+  giveConsent: (consentAge: boolean, consentData: boolean) => Promise<void>;
   submitPreSurvey: (data: PreSurvey) => Promise<void>;
-  updateRequirements: (data: RequirementAnswers) => Promise<void>;
-  submitRating: (productId: string, rating: 'interested' | 'not_interested', reason?: string) => Promise<void>;
-  submitPostSurvey: (data: PostSurvey) => Promise<void>;
+  updateRequirements: (data: RequirementAnswers, deviations: DeviationFlags) => Promise<void>;
+  submitRating: (rating: ProductRating) => Promise<void>;
+  updateGuideTimestamps: (startTs: number, continueTs: number, readSeconds: number) => Promise<void>;
   setFinalChoice: (productId: string) => Promise<void>;
+  submitPostSurvey: (data: PostSurvey) => Promise<void>;
+  markComplete: () => Promise<void>;
   logEvent: (eventType: string, eventData?: unknown) => Promise<void>;
 }
 
@@ -70,10 +71,14 @@ export function StudyProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const giveConsent = useCallback(async () => {
+  const giveConsent = useCallback(async (consentAge: boolean, consentData: boolean) => {
     if (!session) return;
     try {
-      const res = await fetch(`/api/session/${session.participantId}/consent`, { method: 'PATCH' });
+      const res = await fetch(`/api/session/${session.participantId}/consent`, { 
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ consentAge, consentData }),
+      });
       if (!res.ok) throw new Error('Failed to give consent');
       const data = await res.json();
       setSession(data);
@@ -98,13 +103,13 @@ export function StudyProvider({ children }: { children: ReactNode }) {
     }
   }, [session]);
 
-  const updateRequirements = useCallback(async (data: RequirementAnswers) => {
+  const updateRequirements = useCallback(async (data: RequirementAnswers, deviations: DeviationFlags) => {
     if (!session) return;
     try {
       const res = await fetch(`/api/session/${session.participantId}/requirements`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ requirements: data, deviationFlags: deviations }),
       });
       if (!res.ok) throw new Error('Failed to update requirements');
       const result = await res.json();
@@ -114,13 +119,13 @@ export function StudyProvider({ children }: { children: ReactNode }) {
     }
   }, [session]);
 
-  const submitRating = useCallback(async (productId: string, rating: 'interested' | 'not_interested', reason?: string) => {
+  const submitRating = useCallback(async (rating: ProductRating) => {
     if (!session) return;
     try {
       const res = await fetch(`/api/session/${session.participantId}/rating`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId, rating, reason, timestamp: Date.now() }),
+        body: JSON.stringify(rating),
       });
       if (!res.ok) throw new Error('Failed to submit rating');
       const result = await res.json();
@@ -130,15 +135,19 @@ export function StudyProvider({ children }: { children: ReactNode }) {
     }
   }, [session]);
 
-  const submitPostSurvey = useCallback(async (data: PostSurvey) => {
+  const updateGuideTimestamps = useCallback(async (startTs: number, continueTs: number, readSeconds: number) => {
     if (!session) return;
     try {
-      const res = await fetch(`/api/session/${session.participantId}/post-survey`, {
+      const res = await fetch(`/api/session/${session.participantId}/guide-time`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ 
+          guideViewStartTs: new Date(startTs).toISOString(),
+          guideContinueTs: new Date(continueTs).toISOString(),
+          guideReadSeconds: readSeconds
+        }),
       });
-      if (!res.ok) throw new Error('Failed to submit post-survey');
+      if (!res.ok) throw new Error('Failed to update guide timestamps');
       const result = await res.json();
       setSession(result);
     } catch (err) {
@@ -162,6 +171,22 @@ export function StudyProvider({ children }: { children: ReactNode }) {
     }
   }, [session]);
 
+  const submitPostSurvey = useCallback(async (data: PostSurvey) => {
+    if (!session) return;
+    try {
+      const res = await fetch(`/api/session/${session.participantId}/post-survey`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Failed to submit post-survey');
+      const result = await res.json();
+      setSession(result);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [session]);
+
   const logEvent = useCallback(async (eventType: string, eventData?: unknown) => {
     if (!session) return;
     try {
@@ -170,6 +195,21 @@ export function StudyProvider({ children }: { children: ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ eventType, eventData }),
       });
+    } catch (err) {
+      console.error(err);
+    }
+  }, [session]);
+
+  const markComplete = useCallback(async () => {
+    if (!session) return;
+    try {
+      const res = await fetch(`/api/session/${session.participantId}/complete`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) throw new Error('Failed to mark complete');
+      const result = await res.json();
+      setSession(result);
     } catch (err) {
       console.error(err);
     }
@@ -186,8 +226,10 @@ export function StudyProvider({ children }: { children: ReactNode }) {
       submitPreSurvey,
       updateRequirements,
       submitRating,
-      submitPostSurvey,
+      updateGuideTimestamps,
       setFinalChoice,
+      submitPostSurvey,
+      markComplete,
       logEvent,
     }}>
       {children}
