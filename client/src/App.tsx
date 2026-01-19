@@ -20,10 +20,10 @@ function Router() {
       <Route path="/" component={StudyStart} />
       <Route path="/start" component={StudyStart} />
       <Route path="/consent" component={Consent} />
-      <Route path="/pre" component={PreSurvey} />
+      <Route path="/pre-survey" component={PreSurvey} />
       <Route path="/task" component={Task} />
       <Route path="/assistant" component={ShoppingResearch} />
-      <Route path="/post" component={PostSurvey} />
+      <Route path="/post-survey" component={PostSurvey} />
       <Route path="/debrief" component={Debrief} />
       <Route path="/admin" component={Admin} />
     </Switch>

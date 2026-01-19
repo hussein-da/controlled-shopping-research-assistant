@@ -1,45 +1,90 @@
-# Shopping Research Prototype
+# Shopping Research Study Platform
 
-A clickable UI prototype for a Bachelor's thesis on Nudging/Agentic Commerce. This prototype replicates a "Shopping Research" workflow similar to ChatGPT's Shopping Assistant interface with controlled, deterministic interactions.
+A complete research study platform for a Bachelor's thesis on Nudging/Agentic Commerce. This platform combines a pixel-perfect ChatGPT Shopping Assistant prototype with a structured study wrapper for controlled research.
 
 ## Overview
 
-This is a controlled research artifact - NO real web search, NO external APIs, NO actual shopping. Only UI and controlled workflows.
+This is a controlled research artifact:
+- NO real web search
+- NO external APIs  
+- NO actual shopping
+- Only UI and controlled workflows for deterministic research
 
-## Features
+## Study Flow
 
-- **ChatGPT-like interface** with sidebar and topbar (decorative only)
-- **Mode Selection Screen** with Plus menu (Shopping-Assistent option)
-- **Single-use chat input** (disabled after first message)
-- **Gathering requirements flow** with 3 questions (Budget, Aroma, Properties)
-- **Auto-advance timers** that skip without user interaction (10s idle + 10s countdown)
-- **Review Gate** with product collage and "Preview and rate" button
-- **Product card rating system** with Like/Dislike + Rejection Dialog
-- **Transition Screen** with animated progress bar
-- **Final Buyer's Guide** with tags, comparison table, recommendations
-- **All Products Modal** showing liked/not interested products
-- **Sources Panel** with reference links
+The complete participant flow:
 
-## State Machine Flow
+```
+/start → /consent → /pre-survey → /task → /assistant → /post-survey → /debrief
+```
 
-1. **Start**: "Was liegt heute an?" with chat input
+### Study Pages
+
+1. **Study Start** (`/start`): Welcome page with "Studie starten" button
+2. **Consent** (`/consent`): Consent form with checkboxes for age and data processing
+3. **Pre-Survey** (`/pre-survey`): Demographics and prior experience questionnaire
+4. **Task** (`/task`): Task instructions for participants
+5. **Assistant** (`/assistant`): Shopping research prototype (main workflow)
+6. **Post-Survey** (`/post-survey`): Post-task questionnaire about the experience
+7. **Debrief** (`/debrief`): Study debrief with explanation
+8. **Admin** (`/admin?password=<pw>`): Export study data as CSV/JSONL
+
+### A/B Conditions
+
+Each session is randomly assigned to:
+- **baseline**: Standard Buyer's Guide without highlighting
+- **nudge**: Enhanced Buyer's Guide with prominent "Top Pick" recommendation banner
+
+## Shopping Assistant Flow
+
+The main research prototype at `/assistant`:
+
+1. **Start**: "Was liegt heute an?" with centered chat input
 2. **Mode Selection**: Click Plus button → Select "Shopping-Assistent"
 3. **Loading**: Black dot animation + "Starting shopping research"
-4. **Budget**: "Budget für eine Packung?" with 4 options (Bis 5€, Bis 10€, Bis 20€, 20€+)
-5. **Aroma**: "Röstungsgrad bevorzugt?" with 4 options
-6. **Properties**: "Wichtige Merkmale?" with 4 options
-7. **Review Gate**: Product collage + "Preview and rate" button + "Skip all"
-8. **Product Cards**: Individual product review with Like/Dislike buttons
-   - Rejection Dialog: "Why don't you like this product?" with reasons
-   - Product Detail Modal: Full product info with image gallery
-9. **Transition**: "Thanks for the feedback" + animated progress bar
-10. **Final Guide**: Complete shopping guide with:
-    - Header: "Shopped for 3m · 13 products viewed"
-    - Tags: Kaffee, Fairtrade/Bio, Vollautomat, Bis 10 €
-    - Kurzer Überblick, Beste Gesamtwahl, Vergleichstabelle
-    - Weitere starke Picks, Lagerungshinweise
-    - View products button → All Products Modal
-    - Quellen link → Sources Panel
+4. **Requirements (4 Questions)**:
+   - Budget: "Budget für eine Packung?" (Bis 5€, Bis 10€, Bis 20€, 20€+)
+   - Röstgrad: "Röstungsgrad bevorzugt?" (Hell, Mittel, Dunkel, Espresso)
+   - Merkmal: "Wichtige Merkmale?" (Bio, Fairtrade, Regional, Single Origin)
+   - Zubereitung: "Zubereitung?" (Vollautomat, Filtermaschine, French Press, Espressokocher)
+5. **Review Gate**: Product collage + "Preview and rate" button
+6. **Product Cards**: 10 products with Like/Dislike rating
+   - Rejection Dialog with German reasons (Zu teuer, Röstgrad passt nicht, etc.)
+7. **Transition**: "Thanks for feedback" + progress bar
+8. **Final Guide**: Complete Buyer's Guide (nudge condition shows Top Pick banner)
+
+## Timer Behavior
+
+All timers follow the same pattern:
+- **0-10 seconds**: Idle, no visual indicator
+- **10-20 seconds**: Countdown ring fills next to action button
+- **At 20 seconds**: Auto-advance to next state (or default action)
+
+Specific durations:
+- **Requirements Questions**: 20s total, auto-selects "Something else"
+- **Review Gate**: 20s total, auto-clicks "Preview and rate"
+- **Product Cards**: 15s per card, auto-advances
+- **Transition Screen**: 5s with animated progress bar
+
+## Data Persistence
+
+PostgreSQL database with tables:
+- `study_sessions`: Participant data, condition, survey responses, requirements, product ratings
+- `study_events`: Event log with timestamps for all interactions
+
+## API Routes
+
+- `POST /api/session`: Create new study session (random condition assignment)
+- `PATCH /api/session/:participantId/consent`: Update consent status
+- `PATCH /api/session/:participantId/pre-survey`: Submit pre-survey data
+- `PATCH /api/session/:participantId/requirements`: Submit requirements answers
+- `PATCH /api/session/:participantId/product-rating`: Submit product rating
+- `PATCH /api/session/:participantId/final-choice`: Submit final product choice
+- `PATCH /api/session/:participantId/post-survey`: Submit post-survey data
+- `PATCH /api/session/:participantId/complete`: Mark session complete
+- `POST /api/log`: Log individual event
+- `GET /api/admin/export/jsonl`: Export all data as JSONL
+- `GET /api/admin/export/csv`: Export all data as CSV
 
 ## How to Run
 
@@ -54,9 +99,10 @@ The application runs on port 5000.
 1. **Product Data**: Update `mockProductCards` in `shared/schema.ts`
 2. **Final Guide Text**: Update `finalGuideMarkdown` in `shared/schema.ts`
 3. **Sources**: Update `mockSources` in `shared/schema.ts`
-4. **Timer Durations**: 
-   - `TIMER_DURATION` (20000ms) for requirements/review gate
-   - `PRODUCT_TIMER_DURATION` (15000ms) for product cards
+4. **Timer Durations**: Edit constants in component files:
+   - `IDLE_DURATION` (10000ms) - idle period before countdown
+   - `COUNTDOWN_DURATION` (10000ms) - countdown period with ring
+   - `PRODUCT_TIMER_DURATION` (15000ms) - per product card
 
 ## Project Structure
 
@@ -70,22 +116,70 @@ client/src/
 │   ├── start-screen.tsx         # Initial welcome screen
 │   ├── user-message.tsx         # User message bubble
 │   ├── status-display.tsx       # Loading dots and status text
-│   ├── gathering-requirements.tsx  # Question screens with options
+│   ├── gathering-requirements.tsx  # Question screens with 2x2 grid options
 │   ├── review-gate.tsx          # Review consideration screen
 │   ├── product-card-view.tsx    # Product rating cards
-│   ├── rejection-dialog.tsx     # Why don't you like this product?
+│   ├── rejection-dialog.tsx     # German rejection reason dialog
 │   ├── product-detail-modal.tsx # Full product detail modal
 │   ├── transition-screen.tsx    # Thanks for feedback + progress bar
-│   ├── final-guide.tsx          # Buyer's guide with all sections
+│   ├── final-guide.tsx          # Buyer's guide with nudge banner
 │   ├── all-products-modal.tsx   # Grid of all reviewed products
 │   └── sources-panel.tsx        # Right panel with source links
+├── lib/
+│   └── study-context.tsx        # StudyProvider for session management
 ├── pages/
-│   └── shopping-research.tsx    # Main page with state machine
-└── App.tsx                      # Application entry point
+│   ├── study-start.tsx          # Study start page
+│   ├── consent.tsx              # Consent form
+│   ├── pre-survey.tsx           # Pre-survey questionnaire
+│   ├── task.tsx                 # Task instructions
+│   ├── shopping-research.tsx    # Main shopping assistant
+│   ├── post-survey.tsx          # Post-survey questionnaire
+│   ├── debrief.tsx              # Study debrief
+│   └── admin.tsx                # Admin export panel
+└── App.tsx                      # Application entry with routing
+
+server/
+├── routes.ts                    # API endpoints
+├── storage.ts                   # PostgreSQL storage interface
+└── index.ts                     # Express server
 
 shared/
 └── schema.ts                    # Data models, mock data, final guide content
 ```
+
+## Key Test IDs
+
+Study pages:
+- `study-start`: Study start page
+- `consent-adult`, `consent-data`: Consent checkboxes
+- `consent-continue-button`: Consent continue button
+- `pre-survey-form`: Pre-survey form
+- `task-continue-button`: Task continue button
+
+Shopping assistant:
+- `shopping-research-container`: Main container
+- `start-title`: "Was liegt heute an?" title
+- `chat-input-plus`: Open mode selection
+- `mode-shopping`: Select Shopping-Assistent
+- `chat-input-send`: Send message button
+- `gathering-requirements`: Requirements screen
+- `continue-button`: Continue after selection
+- `preview-and-rate-button`: Start product review
+- `product-card-view`: Product card
+- `more-like-this-button`: Like product
+- `not-interested-button`: Dislike product
+- `rejection-dialog`: Rejection reason dialog
+- `rejection-reason-price`, `rejection-reason-roast`, etc.: Rejection reasons
+- `transition-screen`: Transition screen
+- `final-guide`: Final buyer's guide
+- `nudge-top-pick-banner`: Nudge condition highlight (only in nudge)
+- `view-products-button`: Open all products modal
+- `sources-link`: Open sources panel
+
+## Language
+
+- System labels: English ("Gathering requirements", "Review consideration")
+- User-facing content: German (questions, options, guide content)
 
 ## Disabled Interactions (Decorative Only)
 
@@ -93,33 +187,3 @@ shared/
 - Sidebar icons
 - Share/Add person buttons in topbar
 - Chat input after first submission
-
-## Timer Behavior
-
-- **Requirements Questions**: 10s idle + 10s countdown = 20s total
-- **Review Gate**: 20s auto-advance
-- **Product Cards**: 15s per card auto-advance
-- **Transition Screen**: 5s with animated progress bar
-
-## Language
-
-- System labels: English ("Gathering requirements", "Review consideration", "Preview and rate")
-- Questions and options: German ("Budget für eine Packung?", "Bis 10 €", "Fairtrade/Bio")
-- Final Guide: German content
-
-## Key Test IDs
-
-- `chat-input-plus`: Open mode selection
-- `mode-shopping`: Select Shopping-Assistent
-- `chat-input-send`: Send message
-- `gathering-requirements`: Requirements form
-- `continue-button`: Continue after selection
-- `preview-and-rate-button`: Start product review
-- `product-card-view`: Product card
-- `more-like-this-button`: Like product
-- `not-interested-button`: Dislike product
-- `rejection-dialog`: Rejection reason dialog
-- `transition-screen`: Transition screen
-- `final-guide`: Final buyer's guide
-- `view-products-button`: Open all products modal
-- `sources-link`: Open sources panel

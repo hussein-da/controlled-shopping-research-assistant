@@ -18,7 +18,7 @@ export default function Consent() {
     if (!canContinue) return;
     setIsSubmitting(true);
     await giveConsent();
-    setLocation('/pre');
+    setLocation('/pre-survey');
   };
 
   if (!session) {

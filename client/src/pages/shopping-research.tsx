@@ -169,7 +169,7 @@ export default function ShoppingResearch() {
   const handleProductChoice = useCallback((productId: string) => {
     setFinalChoice(productId);
     logEvent('final_choice_made', { productId });
-    setLocation('/post');
+    setLocation('/post-survey');
   }, [setFinalChoice, logEvent, setLocation]);
 
   useEffect(() => {
