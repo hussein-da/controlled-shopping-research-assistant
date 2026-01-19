@@ -35,7 +35,9 @@ const questionConfig = {
   },
 };
 
-const COUNTDOWN_DURATION = 10000;
+const TOTAL_DURATION = 20000;
+const ROTATOR_START_TIME = 10000;
+const ROTATOR_DURATION = 10000;
 
 export function GatheringRequirements({ 
   state, 
@@ -46,12 +48,15 @@ export function GatheringRequirements({
 }: GatheringRequirementsProps) {
   const [progress, setProgress] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
-  const [showCountdown, setShowCountdown] = useState(false);
+  const [showSkipButton, setShowSkipButton] = useState(true);
+  const [showRotator, setShowRotator] = useState(false);
   const [showContinue, setShowContinue] = useState(false);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customInputValue, setCustomInputValue] = useState('');
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const rotatorTimerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(Date.now());
+  const rotatorStartRef = useRef<number>(0);
   const animationRef = useRef<number | null>(null);
 
   const config = questionConfig[state];
@@ -62,34 +67,41 @@ export function GatheringRequirements({
 
   const clearAllTimers = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    if (rotatorTimerRef.current) clearTimeout(rotatorTimerRef.current);
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
   }, []);
 
   useEffect(() => {
     setProgress(0);
     setSelectedOptions([]);
-    setShowCountdown(true);
+    setShowSkipButton(true);
+    setShowRotator(false);
     setShowContinue(false);
     setShowCustomInput(false);
     setCustomInputValue('');
 
     startTimeRef.current = Date.now();
 
-    const animate = () => {
-      const elapsed = Date.now() - startTimeRef.current;
-      const newProgress = Math.min((elapsed / COUNTDOWN_DURATION) * 100, 100);
-      setProgress(newProgress);
+    rotatorTimerRef.current = setTimeout(() => {
+      setShowRotator(true);
+      rotatorStartRef.current = Date.now();
       
-      if (newProgress < 100) {
-        animationRef.current = requestAnimationFrame(animate);
-      }
-    };
-
-    animationRef.current = requestAnimationFrame(animate);
+      const animateRotator = () => {
+        const elapsed = Date.now() - rotatorStartRef.current;
+        const newProgress = Math.min((elapsed / ROTATOR_DURATION) * 100, 100);
+        setProgress(newProgress);
+        
+        if (newProgress < 100) {
+          animationRef.current = requestAnimationFrame(animateRotator);
+        }
+      };
+      
+      animationRef.current = requestAnimationFrame(animateRotator);
+    }, ROTATOR_START_TIME);
 
     timerRef.current = setTimeout(() => {
       onSkip();
-    }, COUNTDOWN_DURATION);
+    }, TOTAL_DURATION);
 
     return () => {
       clearAllTimers();
@@ -98,7 +110,7 @@ export function GatheringRequirements({
 
   const handleSelect = (optionValue: string) => {
     clearAllTimers();
-    setShowCountdown(false);
+    setShowRotator(false);
     setSelectedOptions(prev => {
       if (prev.includes(optionValue)) {
         const newSelection = prev.filter(v => v !== optionValue);
@@ -124,7 +136,7 @@ export function GatheringRequirements({
 
   const handleSomethingElse = () => {
     clearAllTimers();
-    setShowCountdown(false);
+    setShowRotator(false);
     setShowCustomInput(true);
     setShowContinue(true);
   };
@@ -204,37 +216,47 @@ export function GatheringRequirements({
         </button>
       )}
 
-      <button
-        onClick={handleSkipClick}
-        className="flex items-center justify-center gap-2 mx-auto text-gray-500 hover:text-gray-700 transition-colors py-2"
-        data-testid="skip-button"
-      >
-        <span>Skip</span>
-        {showCountdown && (
-          <svg className="w-5 h-5 -rotate-90" viewBox="0 0 20 20">
-            <circle
-              cx="10"
-              cy="10"
-              r="8"
-              fill="none"
-              stroke="#e5e7eb"
-              strokeWidth="2"
-            />
-            <circle
-              cx="10"
-              cy="10"
-              r="8"
-              fill="none"
-              stroke="#9ca3af"
-              strokeWidth="2"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              className="transition-all duration-100"
-            />
-          </svg>
-        )}
-      </button>
+      {showSkipButton && (
+        <button
+          onClick={handleSkipClick}
+          className="flex items-center justify-center gap-2 mx-auto text-gray-500 hover:text-gray-700 transition-colors py-2"
+          data-testid="skip-button"
+        >
+          <span>Skip</span>
+          {showRotator && (
+            <svg 
+              className="w-5 h-5 -rotate-90" 
+              viewBox="0 0 20 20"
+              role="progressbar"
+              aria-valuenow={Math.round(progress)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              data-testid="skip-rotator"
+            >
+              <circle
+                cx="10"
+                cy="10"
+                r="8"
+                fill="none"
+                stroke="#e5e7eb"
+                strokeWidth="2"
+              />
+              <circle
+                cx="10"
+                cy="10"
+                r="8"
+                fill="none"
+                stroke="#9ca3af"
+                strokeWidth="2"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                strokeLinecap="round"
+                className="transition-all duration-100"
+              />
+            </svg>
+          )}
+        </button>
+      )}
     </div>
   );
 }

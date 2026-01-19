@@ -1,0 +1,83 @@
+Korrigiere ausschließlich die folgenden Punkte. Keine neuen Features, kein Redesign, keine zusätzlichen Seiten, keine Änderungen am Flow. Ziel: 1:1 OpenAI/ChatGPT-UI-Konsistenz über ALLE Steps inkl. Buyer’s Guide.
+
+========================================================
+1) GATHERING REQUIREMENTS: 20-SEKUNDEN-LOGIK (KRITISCH)
+========================================================
+Für JEDES der 4 Requirements gilt exakt:
+
+- Gesamtdauer pro Requirement: 20.000 ms (20 Sekunden), immer.
+- Nach 20 Sekunden wird automatisch zum nächsten Requirement gesprungen, wenn der Nutzer vorher keine Auswahl bestätigt hat.
+- In den ersten 10 Sekunden (0–10s): Skip-Button ist sichtbar, aber NOCH OHNE Rotator-Füllring (kein Progress-Ring).
+- Ab Sekunde 10 (10–20s): Skip-Rotator erscheint UND muss innerhalb dieser letzten 10 Sekunden linear von 0% auf 100% füllen.
+- Wenn der Rotator 100% erreicht (bei t=20s), wird sofort automatisch zum nächsten Requirement navigiert.
+- Wichtig: Wenn der Nutzer früher eine Option auswählt und auf Continue klickt, wird das Requirement sofort beendet (step_exit) und es geht weiter – aber die Default-Autotimer-Logik muss weiterhin korrekt funktionieren, falls keine Aktion passiert.
+
+Erwartetes Timing im Worst Case (wenn User NICHTS auswählt, nur abwartet/skippt):
+- 4 Requirements x 20s = 80 Sekunden Gesamtzeit für Gathering Requirements.
+Das ist zwingend.
+
+Implementationshinweise (ohne UI-Änderungen):
+- Nutze pro Requirement einen Timer von 20s.
+- Nutze zusätzlich einen Progress-Timer/Animation erst ab t=10s bis t=20s (10 Sekunden), der den Rotator füllt.
+- Stelle sicher, dass beim Requirement-Wechsel:
+  - alle Timer/Intervals sauber gecleared werden,
+  - Progress zurückgesetzt wird,
+  - kein doppeltes Auto-Navigieren passiert (Race Conditions vermeiden).
+- Logge timing sauber (optional), aber Fokus ist visuelle und funktionale 1:1-Logik.
+
+========================================================
+2) BUYER’S GUIDE: UI MUSS 1:1 CHATGPT-LOOK BEHALTEN
+========================================================
+Problem: Buyer’s Guide hat aktuell plötzlich schwarzen Hintergrund und bricht die UI-Konsistenz.
+
+Fix:
+- Der Buyer’s Guide muss exakt im gleichen ChatGPT/OpenAI-Layout gerendert werden wie die vorherigen Steps:
+  - Weißer Hintergrund
+  - gleiche Header/Logo-Position
+  - gleiche Chat-Container-Struktur
+  - gleiche Typografie/Spacing wie in den vorherigen Sequenzen des Prototyps
+
+Es darf keinen “anderen Screen” geben. Buyer’s Guide ist ein normaler Chat-Inhalt im selben UI-Frame.
+
+========================================================
+3) BUYER’S GUIDE CONTENT: PRODUKTKARTEN + VERGLEICHSTABELLE WIE IN UI-FOTOS
+========================================================
+A) Produktkarten:
+- In „Beste Gesamtwahl“ muss das Produkt 1 als breite Produktkarte gerendert werden (Bild links, Text rechts, gleiche Breite/Skalierung wie in den referenzierten UI-Fotos).
+- In „Weitere Top-Optionen“ müssen die Produkte 2–6 jeweils ebenfalls als Produktkarten gerendert werden (nicht nur Text).
+- Jede Produktkarte verwendet dasselbe Produktbild (dein Kaffee-Bild aus /public/images oder /images), konsistent.
+- Preise sind überall 9,95 €.
+
+B) Vergleichstabelle:
+- Die Vergleichstabelle muss als echte Tabelle im UI gerendert werden (nicht nur Markdown-Text).
+- Layout wie in deinen UI-Fotos:
+  - Tabellenbereich ist horizontal scrollbar (scroll container)
+  - Produkte laufen nach rechts nebeneinander (Spalten)
+  - beim horizontalen Scroll verschiebt sich die Ansicht, sodass weitere Spalten sichtbar werden
+  - Kopf/erste Spalte „Attribut“ bleibt links (wenn möglich sticky), während die Produktspalten horizontal scrollen
+- Zeilen exakt: Preis, Bio/Fairtrade, Geschmacksstil, Verfügbarkeit, Beste Nutzung
+- Spalten: Produkt 1 bis Produkt 6 mit den passenden Labels
+
+========================================================
+4) QUELLENFORMAT: KEINE QUELLEN IM TEXT, NUR AM ENDE KOMPAKT
+========================================================
+Problem: Quellen stehen aktuell inline im Text.
+
+Fix:
+- Entferne alle Inline-Quellenmarker im Fließtext des Buyer’s Guide (also keine „([Quelle][x])“ nach Bulletpoints).
+- Am Ende des Buyer’s Guide soll es einen kompakten Abschnitt geben, z.B.:
+  „Quellen (simuliert):“
+  dann eine kleine Liste 1–N in klein (Footnote-Stil).
+- Diese Quellen dürfen Platzhalter sein (random generiert), aber müssen konsistent formatiert sein.
+- Wichtig: Der Guide-Text selbst bleibt ansonsten wortgleich.
+
+========================================================
+ABNAHMEKRITERIEN (CHECKLISTE)
+========================================================
+- Requirements: Jedes Requirement dauert ohne Nutzeraktion genau 20 Sekunden; Rotator erscheint erst nach 10 Sekunden und füllt in den letzten 10 Sekunden.
+- Worst case Gathering Requirements: 80 Sekunden.
+- Buyer’s Guide: exakt gleicher weißer ChatGPT-UI-Frame wie vorher.
+- Buyer’s Guide: Produkt 1 als breite Karte; Produkte 2–6 als Karten; Vergleichstabelle real gerendert + horizontal scrollbar wie Foto.
+- Keine Inline-Quellen im Text; Quellen nur gesammelt am Ende in klein.
+
+Setze diese Fixes um, ohne weitere Änderungen am Flow oder am Design außerhalb dieser Punkte.
