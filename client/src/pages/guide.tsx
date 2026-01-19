@@ -4,7 +4,7 @@ import { useStudy } from '@/lib/study-context';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
-import { GUIDE_TEXT_A, GUIDE_TEXT_B, NORMALIZED_TARGET } from '@shared/schema';
+import { GUIDE_TEXT, NORMALIZED_TARGET } from '@shared/schema';
 import ReactMarkdown from 'react-markdown';
 
 export default function Guide() {
@@ -33,79 +33,88 @@ export default function Guide() {
     );
   }
 
-  const guideText = session.condition === 'A_OPENAI_GUIDE' ? GUIDE_TEXT_A : GUIDE_TEXT_B;
-  const tags = ["250 g", NORMALIZED_TARGET.budget, NORMALIZED_TARGET.attributes, NORMALIZED_TARGET.grind, NORMALIZED_TARGET.usage, NORMALIZED_TARGET.roast];
+  const tags = [NORMALIZED_TARGET.amount, NORMALIZED_TARGET.budget, NORMALIZED_TARGET.attributes, NORMALIZED_TARGET.grind];
 
   return (
-    <div className="min-h-screen bg-white" data-testid="guide-page">
+    <div className="min-h-screen bg-[#212121]" data-testid="guide-page">
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="mb-4 text-sm text-gray-500">
+        <div className="mb-4 text-sm text-gray-400">
           Schritt 6 von 9
         </div>
 
         <div className="flex flex-wrap gap-2 mb-6">
           {tags.map((tag, idx) => (
-            <Badge key={idx} variant="secondary" className="text-xs">
+            <Badge key={idx} variant="secondary" className="text-xs bg-gray-700 text-gray-200 hover:bg-gray-600">
               {tag}
             </Badge>
           ))}
         </div>
 
-        <div className="prose prose-gray max-w-none mb-8" data-testid="guide-content">
+        <div className="prose prose-invert max-w-none mb-8" data-testid="guide-content">
           <ReactMarkdown
             components={{
               table: ({ children }) => (
-                <div className="overflow-x-auto my-4">
-                  <table className="min-w-full border-collapse border border-gray-200 text-sm">
+                <div className="overflow-x-auto my-4 -mx-4 px-4">
+                  <table className="min-w-full border-collapse text-sm">
                     {children}
                   </table>
                 </div>
               ),
+              thead: ({ children }) => (
+                <thead className="bg-gray-800">
+                  {children}
+                </thead>
+              ),
               th: ({ children }) => (
-                <th className="border border-gray-200 px-3 py-2 bg-gray-50 text-left font-medium">
+                <th className="border border-gray-700 px-3 py-2 text-left font-medium text-gray-200 whitespace-nowrap">
                   {children}
                 </th>
               ),
               td: ({ children }) => (
-                <td className="border border-gray-200 px-3 py-2">
+                <td className="border border-gray-700 px-3 py-2 text-gray-300">
                   {children}
                 </td>
               ),
               h1: ({ children }) => (
-                <h1 className="text-2xl font-bold mb-4 text-gray-900">{children}</h1>
+                <h1 className="text-2xl font-bold mb-4 text-white">{children}</h1>
               ),
               h2: ({ children }) => (
-                <h2 className="text-xl font-semibold mt-6 mb-3 text-gray-800">{children}</h2>
+                <h2 className="text-xl font-semibold mt-6 mb-3 text-gray-100">{children}</h2>
               ),
               h3: ({ children }) => (
-                <h3 className="text-lg font-medium mt-4 mb-2 text-gray-700">{children}</h3>
+                <h3 className="text-lg font-medium mt-4 mb-2 text-gray-200">{children}</h3>
               ),
               p: ({ children }) => (
-                <p className="mb-3 text-gray-600 leading-relaxed">{children}</p>
+                <p className="mb-3 text-gray-300 leading-relaxed">{children}</p>
               ),
               ul: ({ children }) => (
                 <ul className="list-disc pl-5 mb-3 space-y-1">{children}</ul>
               ),
               li: ({ children }) => (
-                <li className="text-gray-600">{children}</li>
+                <li className="text-gray-300">{children}</li>
               ),
               strong: ({ children }) => (
-                <strong className="font-semibold text-gray-900">{children}</strong>
+                <strong className="font-semibold text-white">{children}</strong>
               ),
               hr: () => (
-                <hr className="my-6 border-gray-200" />
+                <hr className="my-6 border-gray-700" />
+              ),
+              a: ({ children, href }) => (
+                <a href={href} className="text-blue-400 hover:text-blue-300 underline" target="_blank" rel="noopener noreferrer">
+                  {children}
+                </a>
               ),
             }}
           >
-            {guideText}
+            {GUIDE_TEXT}
           </ReactMarkdown>
         </div>
 
-        <div className="sticky bottom-0 bg-white py-4 border-t">
+        <div className="sticky bottom-0 bg-[#212121] py-4 border-t border-gray-700">
           <Button
             size="lg"
             onClick={handleContinue}
-            className="w-full"
+            className="w-full bg-white text-gray-900 hover:bg-gray-100"
             data-testid="guide-continue-button"
           >
             Weiter

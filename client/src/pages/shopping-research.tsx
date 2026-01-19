@@ -23,7 +23,7 @@ import { ProductCardView } from '@/components/shopping/product-card-view';
 import { TransitionScreen } from '@/components/shopping/transition-screen';
 import { LoadingDots, StatusDisplay } from '@/components/shopping/status-display';
 
-const TIMER_DURATION = 20000;
+const TIMER_DURATION = 10000;
 const PRODUCT_TIMER_DURATION = 15000;
 
 export default function ShoppingResearch() {
@@ -65,7 +65,7 @@ export default function ShoppingResearch() {
       }, 800);
       
       setTimeout(() => {
-        setAppState('r1_budget');
+        setAppState('r1_amount');
         setPreviousSelection(undefined);
       }, 3500);
     }
@@ -73,91 +73,123 @@ export default function ShoppingResearch() {
 
   const computeDeviationFlags = (answers: WorkflowAnswers): DeviationFlags => {
     return {
-      r1_deviated: !answers.r1_budget?.includes(NORMALIZED_TARGET.budget),
-      r2_deviated: !answers.r2_roast?.includes(NORMALIZED_TARGET.roast),
-      r3_deviated: !answers.r3_grind?.includes(NORMALIZED_TARGET.grind),
-      r4_deviated: !answers.r4_attributes?.includes(NORMALIZED_TARGET.attributes),
+      r1_deviated: !answers.r1_amount?.includes(NORMALIZED_TARGET.amount),
+      r2_deviated: !answers.r2_budget?.includes(NORMALIZED_TARGET.budget),
+      r3_deviated: !answers.r3_attributes?.includes(NORMALIZED_TARGET.attributes),
+      r4_deviated: !answers.r4_grind?.includes(NORMALIZED_TARGET.grind),
     };
   };
 
-  const handleR1BudgetSelect = useCallback((values: string[]) => {
-    const newAnswers = { ...workflowState.answers, r1_budget: values };
+  const handleR1AmountSelect = useCallback((values: string[], customInput?: string) => {
+    const newAnswers = { ...workflowState.answers, r1_amount: values };
     setWorkflowState(prev => ({ ...prev, answers: newAnswers }));
     setPreviousSelection(values.join(', '));
     
     const requirementAnswers: RequirementAnswers = {
-      r1_budget: values,
-      r2_roast: newAnswers.r2_roast || [],
-      r3_grind: newAnswers.r3_grind || [],
-      r4_attributes: newAnswers.r4_attributes || [],
+      r1_amount: values,
+      r2_budget: newAnswers.r2_budget || [],
+      r3_attributes: newAnswers.r3_attributes || [],
+      r4_grind: newAnswers.r4_grind || [],
+      r1_other: customInput,
     };
     const deviations = computeDeviationFlags(newAnswers);
     updateRequirements(requirementAnswers, deviations);
-    logEvent('requirement_answered', { question: 'r1_budget', answer: values });
-    setAppState('r2_roast');
+    logEvent('requirement_answered', { 
+      question: 'r1_amount', 
+      answer: values, 
+      raw_value: values.join(', '),
+      normalized_value: NORMALIZED_TARGET.amount,
+      deviation: deviations.r1_deviated,
+      custom_input: customInput
+    });
+    setAppState('r2_budget');
   }, [workflowState.answers, updateRequirements, logEvent]);
 
-  const handleR2RoastSelect = useCallback((values: string[]) => {
-    const newAnswers = { ...workflowState.answers, r2_roast: values };
+  const handleR2BudgetSelect = useCallback((values: string[], customInput?: string) => {
+    const newAnswers = { ...workflowState.answers, r2_budget: values };
     setWorkflowState(prev => ({ ...prev, answers: newAnswers }));
     setPreviousSelection(values.join(', '));
     
     const requirementAnswers: RequirementAnswers = {
-      r1_budget: newAnswers.r1_budget || [],
-      r2_roast: values,
-      r3_grind: newAnswers.r3_grind || [],
-      r4_attributes: newAnswers.r4_attributes || [],
+      r1_amount: newAnswers.r1_amount || [],
+      r2_budget: values,
+      r3_attributes: newAnswers.r3_attributes || [],
+      r4_grind: newAnswers.r4_grind || [],
+      r2_other: customInput,
     };
     const deviations = computeDeviationFlags(newAnswers);
     updateRequirements(requirementAnswers, deviations);
-    logEvent('requirement_answered', { question: 'r2_roast', answer: values });
-    setAppState('r3_grind');
+    logEvent('requirement_answered', { 
+      question: 'r2_budget', 
+      answer: values,
+      raw_value: values.join(', '),
+      normalized_value: NORMALIZED_TARGET.budget,
+      deviation: deviations.r2_deviated,
+      custom_input: customInput
+    });
+    setAppState('r3_attributes');
   }, [workflowState.answers, updateRequirements, logEvent]);
 
-  const handleR3GrindSelect = useCallback((values: string[]) => {
-    const newAnswers = { ...workflowState.answers, r3_grind: values };
+  const handleR3AttributesSelect = useCallback((values: string[], customInput?: string) => {
+    const newAnswers = { ...workflowState.answers, r3_attributes: values };
     setWorkflowState(prev => ({ ...prev, answers: newAnswers }));
     setPreviousSelection(values.join(', '));
     
     const requirementAnswers: RequirementAnswers = {
-      r1_budget: newAnswers.r1_budget || [],
-      r2_roast: newAnswers.r2_roast || [],
-      r3_grind: values,
-      r4_attributes: newAnswers.r4_attributes || [],
+      r1_amount: newAnswers.r1_amount || [],
+      r2_budget: newAnswers.r2_budget || [],
+      r3_attributes: values,
+      r4_grind: newAnswers.r4_grind || [],
+      r3_other: customInput,
     };
     const deviations = computeDeviationFlags(newAnswers);
     updateRequirements(requirementAnswers, deviations);
-    logEvent('requirement_answered', { question: 'r3_grind', answer: values });
-    setAppState('r4_attributes');
+    logEvent('requirement_answered', { 
+      question: 'r3_attributes', 
+      answer: values,
+      raw_value: values.join(', '),
+      normalized_value: NORMALIZED_TARGET.attributes,
+      deviation: deviations.r3_deviated,
+      custom_input: customInput
+    });
+    setAppState('r4_grind');
   }, [workflowState.answers, updateRequirements, logEvent]);
 
-  const handleR4AttributesSelect = useCallback((values: string[]) => {
-    const newAnswers = { ...workflowState.answers, r4_attributes: values };
+  const handleR4GrindSelect = useCallback((values: string[], customInput?: string) => {
+    const newAnswers = { ...workflowState.answers, r4_grind: values };
     setWorkflowState(prev => ({ ...prev, answers: newAnswers }));
     setPreviousSelection(values.join(', '));
     
     const requirementAnswers: RequirementAnswers = {
-      r1_budget: newAnswers.r1_budget || [],
-      r2_roast: newAnswers.r2_roast || [],
-      r3_grind: newAnswers.r3_grind || [],
-      r4_attributes: values,
+      r1_amount: newAnswers.r1_amount || [],
+      r2_budget: newAnswers.r2_budget || [],
+      r3_attributes: newAnswers.r3_attributes || [],
+      r4_grind: values,
+      r4_other: customInput,
     };
     const deviations = computeDeviationFlags(newAnswers);
     updateRequirements(requirementAnswers, deviations);
-    logEvent('requirement_answered', { question: 'r4_attributes', answer: values });
+    logEvent('requirement_answered', { 
+      question: 'r4_grind', 
+      answer: values,
+      raw_value: values.join(', '),
+      normalized_value: NORMALIZED_TARGET.grind,
+      deviation: deviations.r4_deviated,
+      custom_input: customInput
+    });
     setAppState('review_gate');
   }, [workflowState.answers, updateRequirements, logEvent]);
 
   const handleSkip = useCallback(() => {
     setPreviousSelection(undefined);
     logEvent('requirement_skipped', { question: appState });
-    if (appState === 'r1_budget') {
-      setAppState('r2_roast');
-    } else if (appState === 'r2_roast') {
-      setAppState('r3_grind');
-    } else if (appState === 'r3_grind') {
-      setAppState('r4_attributes');
-    } else if (appState === 'r4_attributes') {
+    if (appState === 'r1_amount') {
+      setAppState('r2_budget');
+    } else if (appState === 'r2_budget') {
+      setAppState('r3_attributes');
+    } else if (appState === 'r3_attributes') {
+      setAppState('r4_grind');
+    } else if (appState === 'r4_grind') {
       setAppState('review_gate');
     }
   }, [appState, logEvent]);
@@ -195,6 +227,12 @@ export default function ShoppingResearch() {
       };
       
       submitRating(rating);
+      logEvent('product_feedback', { 
+        productId: currentId, 
+        action, 
+        reason,
+        productName: currentProduct.name
+      });
       
       setWorkflowState(prev => ({
         ...prev,
@@ -202,7 +240,7 @@ export default function ShoppingResearch() {
         currentProductIndex: prev.currentProductIndex + 1,
       }));
     }
-  }, [workflowState.currentProductIndex, submitRating]);
+  }, [workflowState.currentProductIndex, submitRating, logEvent]);
 
   const handleNextProduct = useCallback(() => {
     if (workflowState.currentProductIndex < products.length - 1) {
@@ -245,14 +283,14 @@ export default function ShoppingResearch() {
           <StatusDisplay status="Starting shopping research" showLoading={true} />
         )}
 
-        {(appState === 'r1_budget' || appState === 'r2_roast' || appState === 'r3_grind' || appState === 'r4_attributes') && (
+        {(appState === 'r1_amount' || appState === 'r2_budget' || appState === 'r3_attributes' || appState === 'r4_grind') && (
           <GatheringRequirements
             state={appState}
             onSelect={
-              appState === 'r1_budget' ? handleR1BudgetSelect :
-              appState === 'r2_roast' ? handleR2RoastSelect :
-              appState === 'r3_grind' ? handleR3GrindSelect :
-              handleR4AttributesSelect
+              appState === 'r1_amount' ? handleR1AmountSelect :
+              appState === 'r2_budget' ? handleR2BudgetSelect :
+              appState === 'r3_attributes' ? handleR3AttributesSelect :
+              handleR4GrindSelect
             }
             onSkip={handleSkip}
             timerDuration={TIMER_DURATION}
@@ -283,7 +321,7 @@ export default function ShoppingResearch() {
         {appState === 'transition' && (
           <TransitionScreen
             onComplete={handleTransitionComplete}
-            productsViewed={productsViewed || 10}
+            productsViewed={productsViewed || 6}
           />
         )}
       </div>

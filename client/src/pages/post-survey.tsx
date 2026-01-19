@@ -8,30 +8,30 @@ import { Checkbox } from '@/components/ui/checkbox';
 import type { PostSurvey } from '@shared/schema';
 import { TOP_6_PRODUCTS } from '@shared/schema';
 
-const mc1_options = ['ja', 'nein', 'unsicher'];
-const mc4_options = ['komplett', 'überflogen', 'kaum'];
+const q1_options = ['ja', 'nein', 'unsicher'];
+const q4_options = ['komplett', 'überflogen', 'kaum'];
 
 const likertQuestions: { id: string; label: string }[] = [
-  { id: 'mc2', label: 'MC2. Der Assistent hat eine Option als "beste Wahl" dargestellt.' },
-  { id: 'n1', label: 'N1. Die Struktur des Berichts hat mich dazu gebracht, bestimmte Optionen stärker zu beachten.' },
-  { id: 'n2', label: 'N2. Ich habe mich unter Zeitdruck gefühlt.' },
-  { id: 'n3', label: 'N3. Es war hilfreich, weniger passende Optionen früh auszusortieren.' },
-  { id: 'n4', label: 'N4. Die Budgetfrage hat meine spätere Auswahl beeinflusst.' },
-  { id: 'n5', label: 'N5. Durch mein Like/Dislike-Feedback hatte ich Kontrolle über das Ergebnis.' },
-  { id: 'n6', label: 'N6. Die "Beste Wahl" wirkte besonders kompetent ausgewählt.' },
-  { id: 'n7', label: 'N7. Weniger angezeigt zu bekommen hat mir die Entscheidung erleichtert.' },
-  { id: 'n8', label: 'N8. Ich wollte dem Rat des Assistenten folgen.' },
-  { id: 'n9', label: 'N9. Die Vergleichstabelle war hilfreich.' },
-  { id: 'n10', label: 'N10. Mehr Filteroptionen hätte ich bevorzugt.' },
-  { id: 'o1', label: 'O1. Ich würde das gewählte Produkt kaufen.' },
-  { id: 'o2', label: 'O2. Ich bin mir sicher, die richtige Entscheidung getroffen zu haben.' },
-  { id: 'o3', label: 'O3. Ich vertraue den Empfehlungen des Assistenten.' },
-  { id: 'o4', label: 'O4. Ich habe mich frei in meiner Entscheidung gefühlt.' },
-  { id: 'o5', label: 'O5. Mir war klar, wie der Assistent zu seinen Empfehlungen kam.' },
-  { id: 'o6', label: 'O6. Ich bin zufrieden mit dem Ergebnis.' },
+  { id: 'q2', label: '2. Der Assistent hat eine Option als "beste Wahl" dargestellt.' },
+  { id: 'q5', label: '5. Die Struktur des Berichts hat mich dazu gebracht, bestimmte Optionen stärker zu beachten.' },
+  { id: 'q6', label: '6. Ich habe mich unter Zeitdruck gefühlt.' },
+  { id: 'q7', label: '7. Es war hilfreich, weniger passende Optionen früh auszusortieren.' },
+  { id: 'q8', label: '8. Die Budgetfrage hat meine spätere Auswahl beeinflusst.' },
+  { id: 'q9', label: '9. Durch mein Like/Dislike-Feedback hatte ich Kontrolle über das Ergebnis.' },
+  { id: 'q10', label: '10. Die "Beste Wahl" wirkte besonders kompetent ausgewählt.' },
+  { id: 'q11', label: '11. Weniger angezeigt zu bekommen hat mir die Entscheidung erleichtert.' },
+  { id: 'q12', label: '12. Ich wollte dem Rat des Assistenten folgen.' },
+  { id: 'q13', label: '13. Die Vergleichstabelle war hilfreich.' },
+  { id: 'q14', label: '14. Mehr Filteroptionen hätte ich bevorzugt.' },
+  { id: 'q15', label: '15. Ich würde das gewählte Produkt kaufen.' },
+  { id: 'q16', label: '16. Ich bin mir sicher, die richtige Entscheidung getroffen zu haben.' },
+  { id: 'q17', label: '17. Ich vertraue den Empfehlungen des Assistenten.' },
+  { id: 'q18', label: '18. Ich habe mich frei in meiner Entscheidung gefühlt.' },
+  { id: 'q19', label: '19. Mir war klar, wie der Assistent zu seinen Empfehlungen kam.' },
+  { id: 'q20', label: '20. Ich bin zufrieden mit dem Ergebnis.' },
 ];
 
-const o8_influences = [
+const q21_influences = [
   'Preis',
   'Bewertungen/Sterne',
   '"Beste Wahl" Hervorhebung',
@@ -46,21 +46,21 @@ export default function PostSurvey() {
   const { submitPostSurvey, session, markComplete } = useStudy();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const [mc1, setMc1] = useState('');
-  const [mc3, setMc3] = useState('');
-  const [mc4, setMc4] = useState('');
+  const [q1, setQ1] = useState('');
+  const [q3, setQ3] = useState('');
+  const [q4, setQ4] = useState('');
   const [likertAnswers, setLikertAnswers] = useState<Record<string, number>>({});
-  const [o8Influences, setO8Influences] = useState<string[]>([]);
+  const [q21Influences, setQ21Influences] = useState<string[]>([]);
 
   const allLikertAnswered = likertQuestions.every(q => likertAnswers[q.id] !== undefined);
-  const isComplete = mc1 && mc3 && mc4 && allLikertAnswered && o8Influences.length > 0;
+  const isComplete = q1 && q3 && q4 && allLikertAnswered && q21Influences.length > 0;
 
   const handleLikert = (id: string, value: number) => {
     setLikertAnswers(prev => ({ ...prev, [id]: value }));
   };
 
   const handleInfluence = (influence: string, checked: boolean) => {
-    setO8Influences(prev => 
+    setQ21Influences(prev => 
       checked ? [...prev, influence] : prev.filter(i => i !== influence)
     );
   };
@@ -70,27 +70,27 @@ export default function PostSurvey() {
     setIsSubmitting(true);
     
     await submitPostSurvey({
-      mc1_best_choice: mc1,
-      mc2_stronger_recommended: likertAnswers.mc2,
-      mc3_which_product: mc3,
-      mc4_read_carefully: mc4,
-      n1_prestructured: likertAnswers.n1,
-      n2_time_pressure: likertAnswers.n2,
-      n3_skip_worse: likertAnswers.n3,
-      n4_budget_influence: likertAnswers.n4,
-      n5_feedback_control: likertAnswers.n5,
-      n6_status_competent: likertAnswers.n6,
-      n7_reduced_choice: likertAnswers.n7,
-      n8_normative: likertAnswers.n8,
-      n9_comparison_table: likertAnswers.n9,
-      n10_more_filters: likertAnswers.n10,
-      o1_purchase_intent: likertAnswers.o1,
-      o2_decision_certainty: likertAnswers.o2,
-      o3_trust: likertAnswers.o3,
-      o4_autonomy: likertAnswers.o4,
-      o5_transparency: likertAnswers.o5,
-      o6_satisfaction: likertAnswers.o6,
-      o8_influences: o8Influences,
+      q1_best_choice: q1,
+      q2_best_choice_likert: likertAnswers.q2,
+      q3_which_product: q3,
+      q4_read_carefully: q4,
+      q5_prestructured: likertAnswers.q5,
+      q6_time_pressure: likertAnswers.q6,
+      q7_skip_worse: likertAnswers.q7,
+      q8_budget_influence: likertAnswers.q8,
+      q9_feedback_control: likertAnswers.q9,
+      q10_status_competent: likertAnswers.q10,
+      q11_reduced_choice: likertAnswers.q11,
+      q12_normative: likertAnswers.q12,
+      q13_comparison_table: likertAnswers.q13,
+      q14_more_filters: likertAnswers.q14,
+      q15_purchase_intent: likertAnswers.q15,
+      q16_decision_certainty: likertAnswers.q16,
+      q17_trust: likertAnswers.q17,
+      q18_autonomy: likertAnswers.q18,
+      q19_transparency: likertAnswers.q19,
+      q20_satisfaction: likertAnswers.q20,
+      q21_influences: q21Influences,
     } as PostSurvey);
 
     await markComplete();
@@ -172,9 +172,9 @@ export default function PostSurvey() {
         <div className="space-y-8">
           <div className="space-y-3">
             <Label className="text-sm font-medium text-gray-900">
-              MC1. Hat der Assistent eine Option als 'beste Wahl' präsentiert?
+              1. Hat der Assistent eine Option als 'beste Wahl' präsentiert?
             </Label>
-            <RadioGroup options={mc1_options} value={mc1} onChange={setMc1} name="mc1" />
+            <RadioGroup options={q1_options} value={q1} onChange={setQ1} name="q1" />
           </div>
 
           {likertQuestions.slice(0, 1).map(q => (
@@ -186,33 +186,33 @@ export default function PostSurvey() {
 
           <div className="space-y-3">
             <Label className="text-sm font-medium text-gray-900">
-              MC3. Welches Produkt wirkte am stärksten empfohlen?
+              3. Welches Produkt wirkte am stärksten empfohlen?
             </Label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {TOP_6_PRODUCTS.map(product => (
                 <button
                   key={product.id}
                   type="button"
-                  onClick={() => setMc3(product.id)}
+                  onClick={() => setQ3(product.id)}
                   className={`px-4 py-3 text-sm rounded-lg border transition-colors text-left ${
-                    mc3 === product.id
+                    q3 === product.id
                       ? 'border-gray-900 bg-gray-900 text-white'
                       : 'border-gray-200 hover:border-gray-300 text-gray-700'
                   }`}
-                  data-testid={`mc3-${product.id}`}
+                  data-testid={`q3-${product.id}`}
                 >
                   {product.name}
                 </button>
               ))}
               <button
                 type="button"
-                onClick={() => setMc3('none')}
+                onClick={() => setQ3('none')}
                 className={`px-4 py-3 text-sm rounded-lg border transition-colors text-left ${
-                  mc3 === 'none'
+                  q3 === 'none'
                     ? 'border-gray-900 bg-gray-900 text-white'
                     : 'border-gray-200 hover:border-gray-300 text-gray-700'
                 }`}
-                data-testid="mc3-none"
+                data-testid="q3-none"
               >
                 Keines besonders
               </button>
@@ -221,9 +221,9 @@ export default function PostSurvey() {
 
           <div className="space-y-3">
             <Label className="text-sm font-medium text-gray-900">
-              MC4. Wie genau haben Sie den Bericht (Guide) gelesen?
+              4. Wie genau haben Sie den Bericht (Guide) gelesen?
             </Label>
-            <RadioGroup options={mc4_options} value={mc4} onChange={setMc4} name="mc4" />
+            <RadioGroup options={q4_options} value={q4} onChange={setQ4} name="q4" />
           </div>
 
           <div className="border-t pt-6">
@@ -250,18 +250,18 @@ export default function PostSurvey() {
 
           <div className="space-y-3">
             <Label className="text-sm font-medium text-gray-900">
-              O8. Was hat Ihre Entscheidung am meisten beeinflusst? (Mehrfachauswahl)
+              21. Was hat Ihre Entscheidung am meisten beeinflusst? (Mehrfachauswahl)
             </Label>
             <div className="space-y-2">
-              {o8_influences.map(influence => (
+              {q21_influences.map(influence => (
                 <div key={influence} className="flex items-center gap-3">
                   <Checkbox
-                    id={`o8-${influence}`}
-                    checked={o8Influences.includes(influence)}
+                    id={`q21-${influence}`}
+                    checked={q21Influences.includes(influence)}
                     onCheckedChange={(checked) => handleInfluence(influence, checked === true)}
-                    data-testid={`o8-${influence.replace(/[^a-zA-Z0-9]/g, '-')}`}
+                    data-testid={`q21-${influence.replace(/[^a-zA-Z0-9]/g, '-')}`}
                   />
-                  <label htmlFor={`o8-${influence}`} className="text-sm text-gray-700 cursor-pointer">
+                  <label htmlFor={`q21-${influence}`} className="text-sm text-gray-700 cursor-pointer">
                     {influence}
                   </label>
                 </div>

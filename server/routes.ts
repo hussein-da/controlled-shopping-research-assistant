@@ -2,52 +2,47 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import type { StudyCondition, ProductRating, NORMALIZED_TARGET } from "@shared/schema";
+import type { ProductRating, NORMALIZED_TARGET } from "@shared/schema";
 
 const preSurveySchema = z.object({
-  p1_age: z.string(),
-  p2_student_status: z.string(),
-  p3_study_program: z.string().optional(),
+  p1_age: z.number().min(18).max(99),
   p4_online_shopping: z.string(),
-  p5_coffee_frequency: z.string(),
-  p6_coffee_knowledge: z.number().min(1).max(7),
   p7_llm_usage: z.string(),
   p8_llm_purchase: z.string(),
-  p9_ranking_affinity: z.number().min(1).max(7),
+  p9_familiarity: z.number().min(1).max(7),
 });
 
 const postSurveySchema = z.object({
-  mc1_best_choice: z.string(),
-  mc2_stronger_recommended: z.number().min(1).max(7),
-  mc3_which_product: z.string(),
-  mc4_read_carefully: z.string(),
-  n1_prestructured: z.number().min(1).max(7),
-  n2_time_pressure: z.number().min(1).max(7),
-  n3_skip_worse: z.number().min(1).max(7),
-  n4_budget_influence: z.number().min(1).max(7),
-  n5_feedback_control: z.number().min(1).max(7),
-  n6_status_competent: z.number().min(1).max(7),
-  n7_reduced_choice: z.number().min(1).max(7),
-  n8_normative: z.number().min(1).max(7),
-  n9_comparison_table: z.number().min(1).max(7),
-  n10_more_filters: z.number().min(1).max(7),
-  o1_purchase_intent: z.number().min(1).max(7),
-  o2_decision_certainty: z.number().min(1).max(7),
-  o3_trust: z.number().min(1).max(7),
-  o4_autonomy: z.number().min(1).max(7),
-  o5_transparency: z.number().min(1).max(7),
-  o6_satisfaction: z.number().min(1).max(7),
-  o7_reason_text: z.string().max(300).optional(),
-  o8_influences: z.array(z.string()),
-  o8_other_text: z.string().optional(),
+  q1_best_choice: z.string(),
+  q2_best_choice_likert: z.number().min(1).max(7),
+  q3_which_product: z.string(),
+  q4_read_carefully: z.string(),
+  q5_prestructured: z.number().min(1).max(7),
+  q6_time_pressure: z.number().min(1).max(7),
+  q7_skip_worse: z.number().min(1).max(7),
+  q8_budget_influence: z.number().min(1).max(7),
+  q9_feedback_control: z.number().min(1).max(7),
+  q10_status_competent: z.number().min(1).max(7),
+  q11_reduced_choice: z.number().min(1).max(7),
+  q12_normative: z.number().min(1).max(7),
+  q13_comparison_table: z.number().min(1).max(7),
+  q14_more_filters: z.number().min(1).max(7),
+  q15_purchase_intent: z.number().min(1).max(7),
+  q16_decision_certainty: z.number().min(1).max(7),
+  q17_trust: z.number().min(1).max(7),
+  q18_autonomy: z.number().min(1).max(7),
+  q19_transparency: z.number().min(1).max(7),
+  q20_satisfaction: z.number().min(1).max(7),
+  q21_influences: z.array(z.string()),
+  q21_other_text: z.string().optional(),
 });
 
 const requirementsSchema = z.object({
   requirements: z.object({
-    r1_budget: z.array(z.string()),
-    r2_roast: z.array(z.string()),
-    r3_grind: z.array(z.string()),
-    r4_attributes: z.array(z.string()),
+    r1_amount: z.array(z.string()),
+    r2_budget: z.array(z.string()),
+    r3_attributes: z.array(z.string()),
+    r4_grind: z.array(z.string()),
     r1_other: z.string().optional(),
     r2_other: z.string().optional(),
     r3_other: z.string().optional(),
@@ -71,6 +66,7 @@ const productRatingSchema = z.object({
 
 const eventSchema = z.object({
   eventType: z.string(),
+  step: z.string().optional(),
   eventData: z.unknown().optional(),
 });
 
@@ -96,9 +92,8 @@ export async function registerRoutes(
   
   app.post("/api/session", async (req, res) => {
     try {
-      const condition: StudyCondition = Math.random() < 0.5 ? "A_OPENAI_GUIDE" : "B_NEUTRAL_GUIDE";
-      const session = await storage.createSession(condition);
-      await storage.logEvent(session.participantId, "session_created", { condition });
+      const session = await storage.createSession();
+      await storage.logEvent(session.participantId, "session_created", "start", {});
       res.json(session);
     } catch (error) {
       console.error("Error creating session:", error);
@@ -131,7 +126,7 @@ export async function registerRoutes(
       if (!session) {
         return res.status(404).json({ error: "Session not found" });
       }
-      await storage.logEvent(participantId, "consent_given", { consentAge, consentData });
+      await storage.logEvent(participantId, "consent_given", "consent", { consentAge, consentData });
       res.json(session);
     } catch (error) {
       console.error("Error updating consent:", error);
@@ -149,7 +144,7 @@ export async function registerRoutes(
       if (!session) {
         return res.status(404).json({ error: "Session not found" });
       }
-      await storage.logEvent(participantId, "pre_survey_completed", preSurvey);
+      await storage.logEvent(participantId, "pre_survey_completed", "pre", preSurvey);
       res.json(session);
     } catch (error) {
       console.error("Error updating pre-survey:", error);
@@ -163,11 +158,10 @@ export async function registerRoutes(
       const { requirements, deviationFlags } = requirementsSchema.parse(req.body);
       
       const normalizedTarget = {
+        amount: "250g",
         budget: "bis 12 €",
-        roast: "hell",
-        grind: "ganze Bohnen",
         attributes: "Bio/Fairtrade",
-        usage: "Vollautomat"
+        grind: "ganze Bohnen"
       };
       
       const session = await storage.updateSession(participantId, { 
@@ -178,7 +172,7 @@ export async function registerRoutes(
       if (!session) {
         return res.status(404).json({ error: "Session not found" });
       }
-      await storage.logEvent(participantId, "requirements_updated", { requirements, deviationFlags });
+      await storage.logEvent(participantId, "requirements_updated", "assistant", { requirements, deviationFlags, normalizedTarget });
       res.json(session);
     } catch (error) {
       console.error("Error updating requirements:", error);
@@ -203,7 +197,7 @@ export async function registerRoutes(
         productRatings: updatedRatings as unknown as Record<string, unknown>
       });
       
-      await storage.logEvent(participantId, "rating_action", rating);
+      await storage.logEvent(participantId, "product_rating", "assistant", rating);
       res.json(session);
     } catch (error) {
       console.error("Error adding rating:", error);
@@ -226,7 +220,7 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Session not found" });
       }
       
-      await storage.logEvent(participantId, "guide_continue", { guideReadSeconds });
+      await storage.logEvent(participantId, "guide_continue", "guide", { guideReadSeconds });
       res.json(session);
     } catch (error) {
       console.error("Error updating guide time:", error);
@@ -245,7 +239,7 @@ export async function registerRoutes(
       if (!session) {
         return res.status(404).json({ error: "Session not found" });
       }
-      await storage.logEvent(participantId, "choice_made", { productId });
+      await storage.logEvent(participantId, "choice_made", "choice", { productId });
       res.json(session);
     } catch (error) {
       console.error("Error updating choice:", error);
@@ -264,7 +258,7 @@ export async function registerRoutes(
       if (!session) {
         return res.status(404).json({ error: "Session not found" });
       }
-      await storage.logEvent(participantId, "post_submit", postSurvey);
+      await storage.logEvent(participantId, "post_survey_completed", "post", postSurvey);
       res.json(session);
     } catch (error) {
       console.error("Error updating post-survey:", error);
@@ -275,8 +269,8 @@ export async function registerRoutes(
   app.post("/api/session/:participantId/event", async (req, res) => {
     try {
       const { participantId } = req.params;
-      const { eventType, eventData } = eventSchema.parse(req.body);
-      const event = await storage.logEvent(participantId, eventType, eventData);
+      const { eventType, step, eventData } = eventSchema.parse(req.body);
+      const event = await storage.logEvent(participantId, eventType, step, eventData);
       res.json(event);
     } catch (error) {
       console.error("Error logging event:", error);
@@ -293,11 +287,29 @@ export async function registerRoutes(
       if (!session) {
         return res.status(404).json({ error: "Session not found" });
       }
-      await storage.logEvent(participantId, "study_completed");
+      await storage.logEvent(participantId, "study_completed", "debrief", {});
       res.json(session);
     } catch (error) {
       console.error("Error marking complete:", error);
       res.status(500).json({ error: "Failed to mark complete" });
+    }
+  });
+
+  app.patch("/api/session/:participantId/notes", async (req, res) => {
+    try {
+      const { participantId } = req.params;
+      const { notes } = z.object({ notes: z.string().max(2000) }).parse(req.body);
+      const session = await storage.updateSession(participantId, { 
+        participantNotes: notes
+      });
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+      await storage.logEvent(participantId, "notes_saved", "debrief", { notes });
+      res.json(session);
+    } catch (error) {
+      console.error("Error saving notes:", error);
+      res.status(500).json({ error: "Failed to save notes" });
     }
   });
 
@@ -371,16 +383,15 @@ export async function registerRoutes(
       const sessions = await storage.getAllSessions();
       
       const headers = [
-        "participant_id", "condition", "created_at", "completed_at",
+        "participant_id", "created_at", "completed_at",
         "consent_age", "consent_data", "guide_read_seconds", "choice_product_id",
-        "p1_age", "p2_student_status", "p3_study_program", "p4_online_shopping",
-        "p5_coffee_frequency", "p6_coffee_knowledge", "p7_llm_usage", "p8_llm_purchase", "p9_ranking_affinity",
-        "mc1_best_choice", "mc2_stronger_recommended", "mc3_which_product", "mc4_read_carefully",
-        "n1_prestructured", "n2_time_pressure", "n3_skip_worse", "n4_budget_influence",
-        "n5_feedback_control", "n6_status_competent", "n7_reduced_choice", "n8_normative",
-        "n9_comparison_table", "n10_more_filters",
-        "o1_purchase_intent", "o2_decision_certainty", "o3_trust", "o4_autonomy",
-        "o5_transparency", "o6_satisfaction", "o7_reason_text"
+        "p1_age", "p4_online_shopping", "p7_llm_usage", "p8_llm_purchase", "p9_familiarity",
+        "q1_best_choice", "q2_best_choice_likert", "q3_which_product", "q4_read_carefully",
+        "q5_prestructured", "q6_time_pressure", "q7_skip_worse", "q8_budget_influence",
+        "q9_feedback_control", "q10_status_competent", "q11_reduced_choice", "q12_normative",
+        "q13_comparison_table", "q14_more_filters",
+        "q15_purchase_intent", "q16_decision_certainty", "q17_trust", "q18_autonomy",
+        "q19_transparency", "q20_satisfaction", "q21_influences", "participant_notes"
       ];
       
       const rows = sessions.map(s => {
@@ -389,7 +400,6 @@ export async function registerRoutes(
         
         return [
           s.participantId,
-          s.condition,
           s.createdAt?.toISOString() || "",
           s.completedAt?.toISOString() || "",
           s.consentAge ? "true" : "false",
@@ -397,35 +407,32 @@ export async function registerRoutes(
           s.guideReadSeconds || "",
           s.choiceProductId || "",
           pre?.p1_age || "",
-          pre?.p2_student_status || "",
-          pre?.p3_study_program || "",
           pre?.p4_online_shopping || "",
-          pre?.p5_coffee_frequency || "",
-          pre?.p6_coffee_knowledge || "",
           pre?.p7_llm_usage || "",
           pre?.p8_llm_purchase || "",
-          pre?.p9_ranking_affinity || "",
-          post?.mc1_best_choice || "",
-          post?.mc2_stronger_recommended || "",
-          post?.mc3_which_product || "",
-          post?.mc4_read_carefully || "",
-          post?.n1_prestructured || "",
-          post?.n2_time_pressure || "",
-          post?.n3_skip_worse || "",
-          post?.n4_budget_influence || "",
-          post?.n5_feedback_control || "",
-          post?.n6_status_competent || "",
-          post?.n7_reduced_choice || "",
-          post?.n8_normative || "",
-          post?.n9_comparison_table || "",
-          post?.n10_more_filters || "",
-          post?.o1_purchase_intent || "",
-          post?.o2_decision_certainty || "",
-          post?.o3_trust || "",
-          post?.o4_autonomy || "",
-          post?.o5_transparency || "",
-          post?.o6_satisfaction || "",
-          post?.o7_reason_text || ""
+          pre?.p9_familiarity || "",
+          post?.q1_best_choice || "",
+          post?.q2_best_choice_likert || "",
+          post?.q3_which_product || "",
+          post?.q4_read_carefully || "",
+          post?.q5_prestructured || "",
+          post?.q6_time_pressure || "",
+          post?.q7_skip_worse || "",
+          post?.q8_budget_influence || "",
+          post?.q9_feedback_control || "",
+          post?.q10_status_competent || "",
+          post?.q11_reduced_choice || "",
+          post?.q12_normative || "",
+          post?.q13_comparison_table || "",
+          post?.q14_more_filters || "",
+          post?.q15_purchase_intent || "",
+          post?.q16_decision_certainty || "",
+          post?.q17_trust || "",
+          post?.q18_autonomy || "",
+          post?.q19_transparency || "",
+          post?.q20_satisfaction || "",
+          JSON.stringify(post?.q21_influences || []),
+          s.participantNotes || ""
         ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
       });
       
@@ -436,6 +443,29 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error exporting CSV:", error);
       res.status(500).json({ error: "Failed to export" });
+    }
+  });
+
+  app.get("/api/admin/health", async (req, res) => {
+    const { password } = req.query;
+    if (password !== adminPassword) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    try {
+      const sessions = await storage.getAllSessions();
+      const events = await storage.getAllEvents();
+      const completedSessions = sessions.filter(s => s.completedAt);
+      
+      res.json({
+        status: "ok",
+        totalSessions: sessions.length,
+        completedSessions: completedSessions.length,
+        totalEvents: events.length,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error getting health:", error);
+      res.status(500).json({ error: "Failed to get health" });
     }
   });
 

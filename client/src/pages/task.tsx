@@ -1,8 +1,9 @@
 import { useLocation } from 'wouter';
 import { useStudy } from '@/lib/study-context';
 import { Button } from '@/components/ui/button';
-import { Loader2, Coffee } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { STUDY_PROMPT } from '@shared/schema';
+import thumbnailBg from '@assets/thumbnail_1768858562792.jpg';
 
 export default function Task() {
   const [, setLocation] = useLocation();
@@ -22,25 +23,23 @@ export default function Task() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center px-4 py-8">
-      <div className="max-w-lg space-y-8">
-        <div className="mb-4 text-sm text-gray-500">
+    <div 
+      className="min-h-screen flex items-center justify-center px-4 py-8 bg-cover bg-center bg-no-repeat relative"
+      style={{ backgroundImage: `url(${thumbnailBg})` }}
+    >
+      <div className="absolute inset-0 bg-black/50" />
+      <div className="relative z-10 max-w-lg space-y-8">
+        <div className="mb-4 text-sm text-white/80">
           Schritt 4 von 9
         </div>
 
-        <div className="flex justify-center">
-          <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
-            <Coffee className="w-8 h-8 text-amber-600" />
-          </div>
-        </div>
-
         <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-semibold text-gray-900">
+          <h1 className="text-2xl font-semibold text-white">
             Aufgabe
           </h1>
         </div>
 
-        <div className="bg-white rounded-xl p-6 space-y-5 shadow-sm">
+        <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 space-y-5 shadow-lg">
           <p className="text-gray-700 leading-relaxed">
             Stellen Sie sich vor: Sie möchten in den nächsten Tagen Kaffee online kaufen.
             Bitte nutzen Sie den Prototypen wie beschrieben.
@@ -53,14 +52,13 @@ export default function Task() {
               <li>• Budget: bis 12 €</li>
               <li>• Nachhaltigkeit: Bio/Fairtrade</li>
               <li>• Mahlart: ganze Bohnen</li>
-              <li>• Nutzung: Vollautomat</li>
             </ul>
           </div>
 
           <div className="space-y-2">
             <h3 className="font-medium text-gray-900 text-sm">Ihre Aufgabe:</h3>
             <ol className="text-sm text-gray-700 space-y-2 list-decimal list-inside">
-              <li>Wählen Sie im Prototyp den Modus 'Shopping Assistant'.</li>
+              <li>Klicken Sie auf das Plus-Symbol und wählen Sie 'Shopping-Assistent'.</li>
               <li>
                 Kopieren Sie den folgenden Prompt und senden Sie ihn ab:
                 <div className="mt-2 bg-gray-100 rounded-lg px-3 py-2 font-mono text-xs">
@@ -76,10 +74,10 @@ export default function Task() {
         <Button
           size="lg"
           onClick={handleStart}
-          className="w-full"
+          className="w-full bg-white text-gray-900 hover:bg-white/90"
           data-testid="task-start-button"
         >
-          Zum Prototyp
+          Zum Shopping Assistant
         </Button>
       </div>
     </div>

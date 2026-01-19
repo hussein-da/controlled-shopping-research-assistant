@@ -2,39 +2,39 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Edit3 } from 'lucide-react';
 import { StatusDisplay } from './status-display';
 import { REQUIREMENT_OPTIONS } from '@shared/schema';
+import { Input } from '@/components/ui/input';
 
 interface GatheringRequirementsProps {
-  state: 'r1_budget' | 'r2_roast' | 'r3_grind' | 'r4_attributes';
-  onSelect: (values: string[]) => void;
+  state: 'r1_amount' | 'r2_budget' | 'r3_attributes' | 'r4_grind';
+  onSelect: (values: string[], customInput?: string) => void;
   onSkip: () => void;
   timerDuration: number;
   previousSelection?: string;
 }
 
 const questionConfig = {
-  r1_budget: {
-    question: 'Budget pro Packung?',
-    options: REQUIREMENT_OPTIONS.r1_budget,
+  r1_amount: {
+    question: 'Mengenbedarf?',
+    options: REQUIREMENT_OPTIONS.r1_amount,
     statusPrefix: 'Gathering requirements',
   },
-  r2_roast: {
-    question: 'Röstung?',
-    options: REQUIREMENT_OPTIONS.r2_roast,
+  r2_budget: {
+    question: 'Budget pro Packung?',
+    options: REQUIREMENT_OPTIONS.r2_budget,
     statusPrefix: '',
   },
-  r3_grind: {
-    question: 'Mahlart?',
-    options: REQUIREMENT_OPTIONS.r3_grind,
-    statusPrefix: '',
-  },
-  r4_attributes: {
+  r3_attributes: {
     question: 'Wichtige Attribute?',
-    options: REQUIREMENT_OPTIONS.r4_attributes,
+    options: REQUIREMENT_OPTIONS.r3_attributes,
+    statusPrefix: '',
+  },
+  r4_grind: {
+    question: 'Mahlart?',
+    options: REQUIREMENT_OPTIONS.r4_grind,
     statusPrefix: '',
   },
 };
 
-const COUNTDOWN_DELAY = 10000;
 const COUNTDOWN_DURATION = 10000;
 
 export function GatheringRequirements({ 
@@ -48,8 +48,9 @@ export function GatheringRequirements({
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [showCountdown, setShowCountdown] = useState(false);
   const [showContinue, setShowContinue] = useState(false);
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customInputValue, setCustomInputValue] = useState('');
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const countdownDelayRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(Date.now());
   const animationRef = useRef<number | null>(null);
 
@@ -61,36 +62,34 @@ export function GatheringRequirements({
 
   const clearAllTimers = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    if (countdownDelayRef.current) clearTimeout(countdownDelayRef.current);
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
   }, []);
 
   useEffect(() => {
     setProgress(0);
     setSelectedOptions([]);
-    setShowCountdown(false);
+    setShowCountdown(true);
     setShowContinue(false);
+    setShowCustomInput(false);
+    setCustomInputValue('');
 
-    countdownDelayRef.current = setTimeout(() => {
-      setShowCountdown(true);
-      startTimeRef.current = Date.now();
+    startTimeRef.current = Date.now();
 
-      const animate = () => {
-        const elapsed = Date.now() - startTimeRef.current;
-        const newProgress = Math.min((elapsed / COUNTDOWN_DURATION) * 100, 100);
-        setProgress(newProgress);
-        
-        if (newProgress < 100) {
-          animationRef.current = requestAnimationFrame(animate);
-        }
-      };
+    const animate = () => {
+      const elapsed = Date.now() - startTimeRef.current;
+      const newProgress = Math.min((elapsed / COUNTDOWN_DURATION) * 100, 100);
+      setProgress(newProgress);
+      
+      if (newProgress < 100) {
+        animationRef.current = requestAnimationFrame(animate);
+      }
+    };
 
-      animationRef.current = requestAnimationFrame(animate);
+    animationRef.current = requestAnimationFrame(animate);
 
-      timerRef.current = setTimeout(() => {
-        onSkip();
-      }, COUNTDOWN_DURATION);
-    }, COUNTDOWN_DELAY);
+    timerRef.current = setTimeout(() => {
+      onSkip();
+    }, COUNTDOWN_DURATION);
 
     return () => {
       clearAllTimers();
@@ -99,28 +98,35 @@ export function GatheringRequirements({
 
   const handleSelect = (optionValue: string) => {
     clearAllTimers();
+    setShowCountdown(false);
     setSelectedOptions(prev => {
       if (prev.includes(optionValue)) {
         const newSelection = prev.filter(v => v !== optionValue);
-        setShowContinue(newSelection.length > 0);
+        setShowContinue(newSelection.length > 0 || showCustomInput);
         return newSelection;
       } else {
         setShowContinue(true);
         return [...prev, optionValue];
       }
     });
-    setShowCountdown(false);
   };
 
   const handleContinue = () => {
-    if (selectedOptions.length > 0) {
-      onSelect(selectedOptions);
+    if (selectedOptions.length > 0 || customInputValue.trim()) {
+      onSelect(selectedOptions, customInputValue.trim() || undefined);
     }
   };
 
   const handleSkipClick = () => {
     clearAllTimers();
     onSkip();
+  };
+
+  const handleSomethingElse = () => {
+    clearAllTimers();
+    setShowCountdown(false);
+    setShowCustomInput(true);
+    setShowContinue(true);
   };
 
   const circumference = 2 * Math.PI * 8;
@@ -165,6 +171,20 @@ export function GatheringRequirements({
         ))}
       </div>
 
+      {showCustomInput && (
+        <div className="space-y-2">
+          <Input
+            type="text"
+            placeholder="Ihre Eingabe..."
+            value={customInputValue}
+            onChange={(e) => setCustomInputValue(e.target.value)}
+            className="w-full"
+            data-testid="custom-input"
+            autoFocus
+          />
+        </div>
+      )}
+
       {showContinue ? (
         <button
           onClick={handleContinue}
@@ -175,7 +195,7 @@ export function GatheringRequirements({
         </button>
       ) : (
         <button
-          onClick={() => {}}
+          onClick={handleSomethingElse}
           className="w-full flex items-center justify-center gap-2 px-4 py-3.5 border border-gray-200 rounded-full text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-colors"
           data-testid="something-else-button"
         >

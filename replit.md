@@ -1,6 +1,6 @@
 # Shopping Research Study Platform
 
-A complete research study platform for a Bachelor's thesis on Nudging/Agentic Commerce. This platform combines a pixel-perfect ChatGPT Shopping Assistant prototype with a structured study wrapper for controlled research.
+A complete research study platform for a Bachelor's thesis on Nudging/Agentic Commerce. This platform features a single-variant shopping assistant prototype with a structured study wrapper for controlled research.
 
 ## Overview
 
@@ -9,6 +9,7 @@ This is a controlled research artifact:
 - NO external APIs  
 - NO actual shopping
 - Only UI and controlled workflows for deterministic research
+- **Single variant only** (no A/B testing)
 
 ## Study Flow (Updated January 2026)
 
@@ -20,37 +21,36 @@ The complete participant flow:
 
 ### Study Pages
 
-1. **Study Start** (`/start`): Welcome page with "Studie starten" button (Schritt 1)
+1. **Study Start** (`/start`): Welcome page with Thumbnail.jpg background, "Studie starten" button (Schritt 1)
 2. **Consent** (`/consent`): Consent form with checkboxes for age and data processing (Schritt 2)
-3. **Pre-Survey** (`/pre`): 9 items (P1-P9) including demographics, shopping habits, LLM usage (Schritt 3)
-4. **Task** (`/task`): Task instructions with Zielkriterien (Schritt 4)
+3. **Pre-Survey** (`/pre`): 5 items - age (18-99), shopping frequency, LLM usage, LLM purchase, familiarity (Schritt 3)
+4. **Task** (`/task`): Task instructions with Thumbnail.jpg background and Zielkriterien (Schritt 4)
 5. **Assistant** (`/assistant`): Shopping research prototype (Schritt 5)
-6. **Guide** (`/guide`): Buyer's Guide display - A/B conditions show different text (Schritt 6)
-7. **Choice** (`/choice`): Final product selection from Top-6 products (Schritt 7)
-8. **Post-Survey** (`/post`): 22+ items including MC1-MC4, N1-N10, O1-O8 (Schritt 8)
-9. **Debrief** (`/debrief`): Study debrief with explanation (Schritt 9)
-10. **Admin** (`/admin?password=<pw>`): Export study data as CSV/JSONL
+6. **Guide** (`/guide`): Buyer's Guide with ChatGPT dark UI (#212121) and horizontal scrollable table (Schritt 6)
+7. **Choice** (`/choice`): Final product selection from 6 products, all priced at 9,95€ (Schritt 7)
+8. **Post-Survey** (`/post`): 21 items with numbered questions (Q1-Q21) (Schritt 8)
+9. **Debrief** (`/debrief`): Study debrief with participant notes field and privacy notice with participant ID (Schritt 9)
+10. **Admin** (`/admin?password=<pw>`): Export study data as CSV/JSONL with health endpoint
 
-### A/B Conditions
+## Product Corpus (P01-P06)
 
-Each session is randomly assigned to:
-- **A_OPENAI_GUIDE**: Guide text styled like OpenAI with "Beste Wahl" recommendation
-- **B_NEUTRAL_GUIDE**: Neutral guide text without highlighting
+6 fictional coffee products with fictional brand names:
+- **P01**: PachaLumo – Chanchamayo Bio (9,95€, hell, Bio/Fairtrade)
+- **P02**: Riftara – Yirgacheffe Flora (9,95€, hell, Bio/Fairtrade)
+- **P03**: Kuntaro – Cocoa Dark (9,95€, dunkel, Bio/Fairtrade)
+- **P04**: Bonavia – City Blend (9,95€, mittel, Bio/Fairtrade)
+- **P05**: BuenaRosa – Pink Bourbon (9,95€, hell, Bio/Fairtrade)
+- **P06**: Kebena Forest – Regenwald Bio (9,95€, mittel, Bio/Fairtrade)
 
-## Product Corpus (P01-P10)
-
-10 fictional coffee products:
-- **Top-6** (P01-P06): Meet normalized target criteria (250g, bis 12€, Bio/Fairtrade, ganze Bohnen, hell)
-- **Distractors** (P07-P10): Do not meet criteria
+All products: 250g, ganze Bohnen, 9,95€
 
 ## Normalized Target Criteria
 
 Regardless of user selections, the guide always uses:
+- Packungsgröße: 250g
 - Budget: bis 12 €
-- Röstung: hell  
-- Mahlart: ganze Bohnen
 - Attribute: Bio/Fairtrade
-- Nutzung: Vollautomat
+- Mahlart: ganze Bohnen
 
 User selections are logged with deviation flags for analysis.
 
@@ -61,59 +61,64 @@ The main research prototype at `/assistant`:
 1. **Start**: "Was liegt heute an?" with centered chat input
 2. **Mode Selection**: Click Plus button → Select "Shopping-Assistent"
 3. **Loading**: Black dot animation + "Starting shopping research"
-4. **Requirements (4 Questions)**:
-   - R1 Budget: bis 8 €, bis 12 €, bis 20 €, 20 € plus
-   - R2 Röstung: hell, mittel, dunkel, entkoffeiniert
-   - R3 Mahlart: ganze Bohnen, Filter gemahlen, Espresso gemahlen, Pads, Kapseln
-   - R4 Attribute: Bio/Fairtrade, schneller Versand, säurearm, Single Origin
+4. **Requirements (4 Questions)** - New order:
+   - R1 Mengenbedarf: 250g, 250-500g, 500-1000g, >1kg
+   - R2 Budget: bis 8 €, bis 12 €, bis 20 €, 20 € +
+   - R3 Attribute: Bio/Fairtrade, schneller Versand, säurearm, Single Origin
+   - R4 Mahlart: ganze Bohnen, Filter gemahlen, Espresso gemahlen, Pads/Kapseln
+   - **10-second skip timer** on each question
+   - **"Something else..." button** with text input for custom answers
 5. **Review Gate**: Product collage + "Vorschau & bewerten" button
-6. **Product Cards**: 10 products with Like/Dislike rating
-   - Rejection reasons: Price, Taste profile, Sustainability, Brand/Trust
-7. **Transition**: "Thanks for feedback" + 5s progress bar
+6. **Product Cards**: 6 products with Like/Dislike rating
+   - Product name is NOT clickable
+   - Uses Kaffee.png image for all products
+   - Rejection reasons: Price, Taste profile, Sustainability, Brand/Trust, Something else
+7. **Transition**: "Thanks for feedback" + progress bar
 8. **Navigate to /guide**: Automatic navigation after transition
 
-## Pre-Survey Items (P1-P9)
+## Pre-Survey Items (5 Questions)
 
-- P1: Alter (18–20, 21–25, 26–30, >30, keine Angabe)
-- P2: Studienstatus (Student:in, nicht Student:in, keine Angabe)
-- P3: Studiengang (optional text field)
-- P4: Online-Shopping Häufigkeit
-- P5: Kaffee-Kaufhäufigkeit
-- P6: Kaffeewissen (7-point Likert)
+- P1: Alter (numeric input, 18-99)
+- P4: Online-Shopping Häufigkeit (selten, monatlich, wöchentlich, mehrmals wöchentlich)
 - P7: LLM-Nutzung (nie, selten, wöchentlich, täglich)
 - P8: LLM für Kaufrecherche (ja, nein, unsicher)
-- P9: Ranking-Affinität (7-point Likert)
+- P9: Vertrautheit mit KI-Shopping-Assistenten (7-point Likert)
 
-## Post-Survey Items (MC1-MC4, N1-N10, O1-O8)
+## Post-Survey Items (Q1-Q21)
 
-### Manipulation Checks (MC)
-- MC1: Hat der Assistent eine Option als 'beste Wahl' präsentiert? (ja/nein/unsicher)
-- MC2: Der Assistent hat eine Option als "beste Wahl" dargestellt (Likert)
-- MC3: Welches Produkt wirkte am stärksten empfohlen? (Product selection)
-- MC4: Wie genau haben Sie den Bericht gelesen? (komplett/überflogen/kaum)
+Numbered questions instead of MC/N/O prefixes:
 
-### Mechanism Perception (N1-N10)
-- N1-N10: Various Likert items about perceived guidance
+- Q1: Hat der Assistent eine Option als 'beste Wahl' präsentiert? (ja/nein/unsicher)
+- Q2: Der Assistent hat eine Option als "beste Wahl" dargestellt (Likert)
+- Q3: Welches Produkt wirkte am stärksten empfohlen? (Product selection)
+- Q4: Wie genau haben Sie den Bericht gelesen? (komplett/überflogen/kaum)
+- Q5-Q14: Mechanism Perception (Likert items)
+- Q15-Q20: Outcomes (Likert items)
+- Q21: Influences (multi-select with "Sonstiges" option)
 
-### Outcomes (O1-O8)
-- O1-O6: Likert items about purchase intent, certainty, trust, autonomy, transparency, satisfaction
-- O8: Influences (multi-select)
+## Debrief Page
+
+- Participant notes textarea for open-ended feedback
+- Privacy notice explaining pseudonymous data collection
+- Contact information for data deletion requests
+- Participant ID with copy button for deletion requests
 
 ## Data Persistence
 
 PostgreSQL database with tables:
-- `study_sessions`: Participant data, condition, survey responses, requirements, product ratings, deviation flags
-- `study_events`: Event log with timestamps for all interactions
+- `study_sessions`: Participant data, survey responses, requirements, product ratings, deviation flags, participant_notes
+- `study_events`: Event log with timestamps and step context for all interactions
 
 Key session fields:
 - `normalized_target`: Always uses standardized criteria
 - `deviation_flags`: Tracks when user selections differ from normalized target
 - `guide_view_start_ts`, `guide_continue_ts`, `guide_read_seconds`: Guide timing
 - `choice_product_id`: Final product selection
+- `participant_notes`: Open-ended feedback from debrief
 
 ## API Routes
 
-- `POST /api/session`: Create new study session (random condition assignment)
+- `POST /api/session`: Create new study session
 - `GET /api/session/:participantId`: Get session by participant ID
 - `PATCH /api/session/:participantId/consent`: Update consent status
 - `PATCH /api/session/:participantId/pre-survey`: Submit pre-survey data
@@ -123,9 +128,11 @@ Key session fields:
 - `PATCH /api/session/:participantId/choice`: Submit final product choice
 - `PATCH /api/session/:participantId/post-survey`: Submit post-survey data
 - `PATCH /api/session/:participantId/complete`: Mark session complete
-- `POST /api/session/:participantId/event`: Log individual event
+- `PATCH /api/session/:participantId/notes`: Save participant notes
+- `POST /api/session/:participantId/event`: Log individual event with step context
 - `GET /api/admin/export/jsonl`: Export all data as JSONL
 - `GET /api/admin/export/csv`: Export all data as CSV
+- `GET /api/admin/health`: Health check with session statistics
 
 ## How to Run
 
@@ -138,7 +145,7 @@ The application runs on port 5000.
 ## How to Customize
 
 1. **Product Data**: Update `products` array in `shared/schema.ts`
-2. **Guide Texts**: Update `GUIDE_TEXT_A` and `GUIDE_TEXT_B` in `shared/schema.ts`
+2. **Guide Text**: Update `GUIDE_TEXT` in `shared/schema.ts`
 3. **Normalized Target**: Update `NORMALIZED_TARGET` in `shared/schema.ts`
 
 ## Project Structure
@@ -153,25 +160,24 @@ client/src/
 │   ├── start-screen.tsx         # Initial welcome screen
 │   ├── user-message.tsx         # User message bubble
 │   ├── status-display.tsx       # Loading dots and status text
-│   ├── gathering-requirements.tsx  # Question screens with options
+│   ├── gathering-requirements.tsx  # Question screens with options and custom input
 │   ├── review-gate.tsx          # Review consideration screen
-│   ├── product-card-view.tsx    # Product rating cards
+│   ├── product-card-view.tsx    # Product rating cards (non-clickable title)
 │   ├── rejection-dialog.tsx     # Rejection reason dialog
-│   ├── product-detail-modal.tsx # Full product detail modal
 │   ├── transition-screen.tsx    # Thanks for feedback + progress bar
 │   └── all-products-modal.tsx   # Grid of all reviewed products
 ├── lib/
 │   └── study-context.tsx        # StudyProvider for session management
 ├── pages/
-│   ├── study-start.tsx          # Study start page
+│   ├── study-start.tsx          # Study start page with Thumbnail background
 │   ├── consent.tsx              # Consent form
-│   ├── pre-survey.tsx           # Pre-survey questionnaire (P1-P9)
-│   ├── task.tsx                 # Task instructions
+│   ├── pre-survey.tsx           # Pre-survey questionnaire (5 items)
+│   ├── task.tsx                 # Task instructions with Thumbnail background
 │   ├── shopping-research.tsx    # Main shopping assistant
-│   ├── guide.tsx                # Buyer's guide display
-│   ├── choice.tsx               # Final product selection
-│   ├── post-survey.tsx          # Post-survey questionnaire (MC, N, O items)
-│   ├── debrief.tsx              # Study debrief
+│   ├── guide.tsx                # Buyer's guide with dark ChatGPT UI
+│   ├── choice.tsx               # Final product selection (6 products)
+│   ├── post-survey.tsx          # Post-survey questionnaire (Q1-Q21)
+│   ├── debrief.tsx              # Study debrief with notes and privacy info
 │   └── admin.tsx                # Admin export panel
 └── App.tsx                      # Application entry with routing
 
@@ -181,7 +187,7 @@ server/
 └── index.ts                     # Express server
 
 shared/
-└── schema.ts                    # Data models, products, guide texts, constants
+└── schema.ts                    # Data models, products, guide text, constants
 ```
 
 ## Key Test IDs
@@ -192,6 +198,7 @@ Study pages:
 - `consent-adult`, `consent-data`: Consent checkboxes
 - `consent-continue-button`: Consent continue button
 - `pre-survey-form`: Pre-survey form
+- `p1-age`: Age input (numeric)
 - `pre-survey-submit-button`: Pre-survey submit button
 - `task-start-button`: Task start button
 - `guide-page`, `guide-content`: Guide page
@@ -201,6 +208,8 @@ Study pages:
 - `choice-submit-button`: Choice submit button
 - `post-survey-form`: Post-survey form
 - `post-survey-submit-button`: Post-survey submit button
+- `participant-notes`: Notes textarea
+- `copy-participant-id`: Copy ID button
 
 Shopping assistant:
 - `shopping-research-container`: Main container
@@ -209,9 +218,14 @@ Shopping assistant:
 - `mode-shopping`: Select Shopping-Assistent
 - `chat-input-send`: Send message button
 - `gathering-requirements`: Requirements screen
+- `option-*`: Option buttons
 - `continue-button`: Continue after selection
+- `skip-button`: Skip with 10s countdown
+- `something-else-button`: Open custom input
+- `custom-input`: Text input for custom answers
 - `preview-and-rate-button`: Start product review
 - `product-card-view`: Product card
+- `product-title`: Product name (NOT clickable)
 - `more-like-this-button`: Like product
 - `not-interested-button`: Dislike product
 - `rejection-dialog`: Rejection reason dialog
@@ -222,6 +236,11 @@ Shopping assistant:
 - System labels: English ("Gathering requirements", "Review consideration")
 - User-facing content: German (questions, options, guide content)
 - Rejection reasons: English (Price, Taste profile, Sustainability, Brand/Trust)
+
+## Assets
+
+- `attached_assets/thumbnail_1768858562792.jpg`: Background for /start, /task, /debrief
+- `attached_assets/Kaffee_1768855218017.png`: Product image for all products
 
 ## Studienleitung
 

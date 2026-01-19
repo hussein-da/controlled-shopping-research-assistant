@@ -7,11 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import type { PreSurvey } from '@shared/schema';
 
-const ageOptions = ['18–20', '21–25', '26–30', '>30', 'keine Angabe'];
-const studentOptions = ['Student:in', 'nicht Student:in', 'keine Angabe'];
-const frequencyOptions = ['selten', 'monatlich', 'wöchentlich', 'mehrmals wöchentlich'];
 const llmUsageOptions = ['nie', 'selten', 'wöchentlich', 'täglich'];
 const llmPurchaseOptions = ['ja', 'nein', 'unsicher'];
+const shoppingFrequencyOptions = ['selten', 'monatlich', 'wöchentlich', 'mehrmals wöchentlich'];
 
 export default function PreSurvey() {
   const [, setLocation] = useLocation();
@@ -19,31 +17,24 @@ export default function PreSurvey() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [p1Age, setP1Age] = useState('');
-  const [p2Student, setP2Student] = useState('');
-  const [p3Program, setP3Program] = useState('');
   const [p4Shopping, setP4Shopping] = useState('');
-  const [p5Coffee, setP5Coffee] = useState('');
-  const [p6Knowledge, setP6Knowledge] = useState<number | null>(null);
   const [p7Llm, setP7Llm] = useState('');
   const [p8LlmPurchase, setP8LlmPurchase] = useState('');
-  const [p9Ranking, setP9Ranking] = useState<number | null>(null);
+  const [p9Familiarity, setP9Familiarity] = useState<number | null>(null);
 
-  const isComplete = p1Age && p2Student && p4Shopping && p5Coffee && p6Knowledge && p7Llm && p8LlmPurchase && p9Ranking;
+  const ageValid = p1Age && parseInt(p1Age) >= 18 && parseInt(p1Age) <= 99;
+  const isComplete = ageValid && p4Shopping && p7Llm && p8LlmPurchase && p9Familiarity;
 
   const handleSubmit = async () => {
     if (!isComplete) return;
     setIsSubmitting(true);
     
     await submitPreSurvey({
-      p1_age: p1Age,
-      p2_student_status: p2Student,
-      p3_study_program: p3Program || undefined,
+      p1_age: parseInt(p1Age),
       p4_online_shopping: p4Shopping,
-      p5_coffee_frequency: p5Coffee,
-      p6_coffee_knowledge: p6Knowledge!,
       p7_llm_usage: p7Llm,
       p8_llm_purchase: p8LlmPurchase,
-      p9_ranking_affinity: p9Ranking!,
+      p9_familiarity: p9Familiarity!,
     } as PreSurvey);
     
     setLocation('/task');
@@ -81,11 +72,16 @@ export default function PreSurvey() {
     </div>
   );
 
-  const LikertScale = ({ value, onChange, name, label }: { value: number | null, onChange: (v: number) => void, name: string, label: string }) => (
+  const LikertScale = ({ value, onChange, name, leftLabel, rightLabel }: { 
+    value: number | null, 
+    onChange: (v: number) => void, 
+    name: string, 
+    leftLabel: string,
+    rightLabel: string 
+  }) => (
     <div className="space-y-3">
-      <Label className="text-sm text-gray-900">{label}</Label>
       <div className="flex items-center gap-2">
-        <span className="text-xs text-gray-500 w-28">stimme gar nicht zu</span>
+        <span className="text-xs text-gray-500 w-28">{leftLabel}</span>
         <div className="flex gap-1 flex-1 justify-center">
           {[1, 2, 3, 4, 5, 6, 7].map(n => (
             <button
@@ -103,7 +99,7 @@ export default function PreSurvey() {
             </button>
           ))}
         </div>
-        <span className="text-xs text-gray-500 w-24 text-right">stimme voll zu</span>
+        <span className="text-xs text-gray-500 w-24 text-right">{rightLabel}</span>
       </div>
     </div>
   );
@@ -120,68 +116,64 @@ export default function PreSurvey() {
             Kurze Vorabfragen
           </h1>
           <p className="text-gray-600">
-            Bitte beantworten Sie die folgenden Fragen. Sie können bei sensiblen Angaben 'keine Angabe' wählen.
+            Bitte beantworten Sie die folgenden Fragen.
           </p>
         </div>
 
         <div className="space-y-8">
           <div className="space-y-3">
-            <Label className="text-sm font-medium text-gray-900">P1. Alter</Label>
-            <RadioGroup options={ageOptions} value={p1Age} onChange={setP1Age} name="p1-age" />
-          </div>
-
-          <div className="space-y-3">
-            <Label className="text-sm font-medium text-gray-900">P2. Studienstatus</Label>
-            <RadioGroup options={studentOptions} value={p2Student} onChange={setP2Student} name="p2-student" />
-          </div>
-
-          <div className="space-y-3">
-            <Label htmlFor="p3-program" className="text-sm font-medium text-gray-900">P3. Studiengang (optional)</Label>
+            <Label htmlFor="p1-age" className="text-sm font-medium text-gray-900">
+              1. Wie alt sind Sie (in Jahren)?
+            </Label>
             <Input
-              id="p3-program"
-              type="text"
-              maxLength={60}
-              value={p3Program}
-              onChange={(e) => setP3Program(e.target.value)}
-              placeholder="z.B. E-Commerce, Informatik..."
-              className="max-w-md"
-              data-testid="p3-program"
+              id="p1-age"
+              type="number"
+              min={18}
+              max={99}
+              value={p1Age}
+              onChange={(e) => setP1Age(e.target.value)}
+              placeholder="z.B. 24"
+              className="max-w-32"
+              data-testid="p1-age"
             />
+            {p1Age && !ageValid && (
+              <p className="text-sm text-red-500">Bitte geben Sie ein Alter zwischen 18 und 99 an.</p>
+            )}
           </div>
 
           <div className="space-y-3">
-            <Label className="text-sm font-medium text-gray-900">P4. Online-Shopping Häufigkeit</Label>
-            <RadioGroup options={frequencyOptions} value={p4Shopping} onChange={setP4Shopping} name="p4-shopping" />
+            <Label className="text-sm font-medium text-gray-900">
+              2. Wie häufig kaufen Sie online ein?
+            </Label>
+            <RadioGroup options={shoppingFrequencyOptions} value={p4Shopping} onChange={setP4Shopping} name="p4-shopping" />
           </div>
 
           <div className="space-y-3">
-            <Label className="text-sm font-medium text-gray-900">P5. Kaffee-Kaufhäufigkeit</Label>
-            <RadioGroup options={frequencyOptions} value={p5Coffee} onChange={setP5Coffee} name="p5-coffee" />
-          </div>
-
-          <LikertScale 
-            value={p6Knowledge} 
-            onChange={setP6Knowledge} 
-            name="p6-knowledge"
-            label="P6. Ich kenne mich mit Kaffeeprodukten gut aus."
-          />
-
-          <div className="space-y-3">
-            <Label className="text-sm font-medium text-gray-900">P7. LLM-Nutzung (ChatGPT, Claude, etc.)</Label>
+            <Label className="text-sm font-medium text-gray-900">
+              3. Wie häufig nutzen Sie KI-Chatbots (z. B. ChatGPT) insgesamt?
+            </Label>
             <RadioGroup options={llmUsageOptions} value={p7Llm} onChange={setP7Llm} name="p7-llm" />
           </div>
 
           <div className="space-y-3">
-            <Label className="text-sm font-medium text-gray-900">P8. LLM für Kaufrecherche genutzt?</Label>
+            <Label className="text-sm font-medium text-gray-900">
+              4. Haben Sie KI-Chatbots schon einmal genutzt, um Produkte zu recherchieren oder Kaufentscheidungen vorzubereiten?
+            </Label>
             <RadioGroup options={llmPurchaseOptions} value={p8LlmPurchase} onChange={setP8LlmPurchase} name="p8-llm-purchase" />
           </div>
 
-          <LikertScale 
-            value={p9Ranking} 
-            onChange={setP9Ranking} 
-            name="p9-ranking"
-            label="P9. Vergleichstabellen und Rankings helfen mir beim Kauf."
-          />
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-gray-900">
+              5. Wie vertraut sind Sie mit KI-Shopping-Assistenten oder Shopping-Agenten (z. B. KI, die Produkte vorschlägt und vergleicht)?
+            </Label>
+            <LikertScale 
+              value={p9Familiarity} 
+              onChange={setP9Familiarity} 
+              name="p9-familiarity"
+              leftLabel="gar nicht vertraut"
+              rightLabel="sehr vertraut"
+            />
+          </div>
         </div>
 
         <div className="flex gap-3 pt-4">

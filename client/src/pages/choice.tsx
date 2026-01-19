@@ -7,6 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { TOP_6_PRODUCTS } from '@shared/schema';
+import coffeeImage from '@assets/Kaffee_1768855218017.png';
 
 export default function Choice() {
   const [, setLocation] = useLocation();
@@ -69,10 +70,12 @@ export default function Choice() {
                       className="mt-1"
                     />
                     <div className="flex-1">
-                      <div className="w-full h-32 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
-                        <span className="text-4xl text-gray-300">
-                          {product.id}
-                        </span>
+                      <div className="w-full h-32 bg-amber-50 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+                        <img 
+                          src={coffeeImage} 
+                          alt={product.name}
+                          className="w-20 h-20 object-contain"
+                        />
                       </div>
                       <Label htmlFor={product.id} className="cursor-pointer">
                         <h3 className="font-medium text-gray-900 text-sm mb-1">

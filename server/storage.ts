@@ -3,11 +3,6 @@ import {
   type InsertUser, 
   type StudySession, 
   type StudyEvent,
-  type PreSurvey,
-  type PostSurvey,
-  type RequirementAnswers,
-  type ProductRating,
-  type StudyCondition,
   studySessions,
   studyEvents
 } from "@shared/schema";
@@ -20,12 +15,12 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
-  createSession(condition: StudyCondition): Promise<StudySession>;
+  createSession(): Promise<StudySession>;
   getSession(participantId: string): Promise<StudySession | undefined>;
   updateSession(participantId: string, data: Partial<StudySession>): Promise<StudySession | undefined>;
   getAllSessions(): Promise<StudySession[]>;
   
-  logEvent(participantId: string, eventType: string, eventData?: unknown): Promise<StudyEvent>;
+  logEvent(participantId: string, eventType: string, step?: string, eventData?: unknown): Promise<StudyEvent>;
   getEvents(participantId: string): Promise<StudyEvent[]>;
   getAllEvents(): Promise<StudyEvent[]>;
 }
@@ -54,9 +49,9 @@ export class MemStorage implements IStorage {
     return user;
   }
 
-  async createSession(condition: StudyCondition): Promise<StudySession> {
+  async createSession(): Promise<StudySession> {
     const [session] = await db.insert(studySessions)
-      .values({ condition })
+      .values({})
       .returning();
     return session;
   }
@@ -80,11 +75,12 @@ export class MemStorage implements IStorage {
     return db.select().from(studySessions).orderBy(desc(studySessions.createdAt));
   }
 
-  async logEvent(participantId: string, eventType: string, eventData?: unknown): Promise<StudyEvent> {
+  async logEvent(participantId: string, eventType: string, step?: string, eventData?: unknown): Promise<StudyEvent> {
     const [event] = await db.insert(studyEvents)
       .values({ 
         participantId, 
         eventType, 
+        step,
         eventData: eventData as Record<string, unknown> 
       })
       .returning();

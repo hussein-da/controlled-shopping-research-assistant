@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Check, ChevronRight, ArrowDown, Star } from 'lucide-react';
+import { X, Check, ArrowDown } from 'lucide-react';
 import { Product } from '@shared/schema';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { StatusDisplay } from './status-display';
 import { RejectionDialog } from './rejection-dialog';
-import { ProductDetailModal } from './product-detail-modal';
+import coffeeImage from '@assets/Kaffee_1768855218017.png';
 
 interface ProductCardViewProps {
   product: Product;
@@ -26,12 +26,10 @@ export function ProductCardView({
   isFirstProduct = false
 }: ProductCardViewProps) {
   const [showRejectionDialog, setShowRejectionDialog] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setShowRejectionDialog(false);
-    setShowDetailModal(false);
     
     timerRef.current = setTimeout(() => {
       onTimeout();
@@ -54,18 +52,6 @@ export function ProductCardView({
   const handleMoreLikeThis = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
     onMoreLikeThis();
-  };
-
-  const handleProductClick = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setShowDetailModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowDetailModal(false);
-    timerRef.current = setTimeout(() => {
-      onTimeout();
-    }, timerDuration);
   };
 
   const handleSkip = () => {
@@ -104,30 +90,20 @@ export function ProductCardView({
       
       <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white">
         <div className="flex flex-col md:flex-row">
-          <div 
-            className="w-full md:w-72 h-72 bg-gray-50 flex items-center justify-center p-6 flex-shrink-0 cursor-pointer"
-            onClick={handleProductClick}
-          >
-            <div className="w-full h-full bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-24 h-32 bg-amber-200 rounded-lg mx-auto mb-2 flex items-center justify-center shadow-md">
-                  <span className="text-4xl text-amber-600">C</span>
-                </div>
-                <span className="text-xs text-amber-700">Coffee Package</span>
-              </div>
-            </div>
+          <div className="w-full md:w-72 h-72 bg-amber-50 flex items-center justify-center p-6 flex-shrink-0">
+            <img 
+              src={coffeeImage} 
+              alt={product.name}
+              className="w-32 h-32 object-contain"
+            />
           </div>
 
           <div className="flex-1 p-4 md:p-6">
-            <button
-              onClick={handleProductClick}
-              className="flex items-start justify-between mb-1 w-full text-left group"
-            >
-              <h3 className="text-lg font-medium text-gray-900 pr-4 group-hover:underline" data-testid="product-title">
+            <div className="mb-1">
+              <h3 className="text-lg font-medium text-gray-900" data-testid="product-title">
                 {product.name}
               </h3>
-              <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0 mt-1" />
-            </button>
+            </div>
 
             <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
               <span>{priceFormatted}</span>
@@ -186,10 +162,6 @@ export function ProductCardView({
       >
         Überspringen
       </button>
-
-      {showDetailModal && (
-        <ProductDetailModal product={product} onClose={handleCloseModal} />
-      )}
     </div>
   );
 }
