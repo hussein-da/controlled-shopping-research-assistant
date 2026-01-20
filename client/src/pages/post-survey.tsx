@@ -189,7 +189,7 @@ export default function PostSurvey() {
               3. Welches Produkt wirkte am stärksten empfohlen?
             </Label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {TOP_6_PRODUCTS.map(product => (
+              {TOP_6_PRODUCTS.map((product, index) => (
                 <button
                   key={product.id}
                   type="button"
@@ -201,7 +201,7 @@ export default function PostSurvey() {
                   }`}
                   data-testid={`q3-${product.id}`}
                 >
-                  {product.name}
+                  <span className="font-medium">Treffer {index + 1}:</span> {product.name}
                 </button>
               ))}
               <button

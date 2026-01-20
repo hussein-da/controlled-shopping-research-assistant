@@ -403,7 +403,7 @@ export default function Admin() {
       </div>
 
       <Dialog open={!!selectedSession} onOpenChange={() => setSelectedSession(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh]">
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%]" data-testid="admin-detail-dialog">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between gap-4">
               <span>Teilnehmer: {selectedSession?.participantId.slice(0, 12)}...</span>
