@@ -1,9 +1,8 @@
-import { Product } from '@shared/schema';
 import { ArrowDown, Edit3 } from 'lucide-react';
 import { StatusDisplay } from './status-display';
 
 interface RejectionDialogProps {
-  product: Product;
+  productName: string;
   onSelectReason: (reason: string) => void;
   onSkip: () => void;
 }
@@ -15,9 +14,7 @@ const rejectionReasons = [
   { id: 'features', label: 'Eigenschaften fehlen' },
 ];
 
-export function RejectionDialog({ product, onSelectReason, onSkip }: RejectionDialogProps) {
-  const priceFormatted = `${product.price_eur.toFixed(2).replace('.', ',')} €`;
-  
+export function RejectionDialog({ productName, onSelectReason, onSkip }: RejectionDialogProps) {
   return (
     <div 
       className="space-y-6 animate-in fade-in duration-300"
@@ -32,8 +29,7 @@ export function RejectionDialog({ product, onSelectReason, onSkip }: RejectionDi
           </div>
         </div>
         <div className="min-w-0">
-          <h4 className="font-medium text-gray-900 truncate">{product.name}</h4>
-          <p className="text-sm text-gray-500">{priceFormatted} · {product.brand}</p>
+          <h4 className="font-medium text-gray-900 truncate">{productName}</h4>
         </div>
       </div>
 

@@ -267,7 +267,7 @@ export const RATING_PRODUCTS: RatingProduct[] = [
     pack_size: "1 kg",
     tasting_notes: ["mittel", "rund", "vielfältig"],
     special: "Unabhängiger Testsieg",
-    image_path: "/assets/R01_1768905979935.jpg"
+    image_path: "/attached_assets/R01_1768905979935.jpg"
   },
   {
     id: "R02",
@@ -277,7 +277,7 @@ export const RATING_PRODUCTS: RatingProduct[] = [
     pack_size: "1 kg",
     tasting_notes: ["zartbitter", "rund"],
     special: "Milchdrinks / Vollautomat",
-    image_path: "/assets/R02_1768905979935.jpg"
+    image_path: "/attached_assets/R02_1768905979935.jpg"
   },
   {
     id: "R03",
@@ -287,7 +287,7 @@ export const RATING_PRODUCTS: RatingProduct[] = [
     pack_size: "500 g",
     tasting_notes: ["ausgewogen", "leicht nussig"],
     special: "Alltagskaffee",
-    image_path: "/assets/R03_1768905979934.jpg"
+    image_path: "/attached_assets/R03_1768905979934.jpg"
   },
   {
     id: "R04",
@@ -297,7 +297,7 @@ export const RATING_PRODUCTS: RatingProduct[] = [
     pack_size: "250 g",
     tasting_notes: ["karamellig", "kräftige Süße"],
     special: "Sofort verfügbar, 2–5 Tage",
-    image_path: "/assets/R04_1768905979934.jpg"
+    image_path: "/attached_assets/R04_1768905979934.jpg"
   },
   {
     id: "R05",
@@ -307,7 +307,7 @@ export const RATING_PRODUCTS: RatingProduct[] = [
     pack_size: "Single Origin",
     tasting_notes: ["nussig", "feinfruchtig", "mild"],
     special: "Social-Project Single Origin",
-    image_path: "/assets/R05_1768905979933.jpg"
+    image_path: "/attached_assets/R05_1768905979933.jpg"
   }
 ];
 

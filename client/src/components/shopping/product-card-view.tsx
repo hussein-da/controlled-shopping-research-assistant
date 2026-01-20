@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Check, ArrowDown } from 'lucide-react';
-import { Product } from '@shared/schema';
+import { RatingProduct } from '@shared/schema';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { StatusDisplay } from './status-display';
 import { RejectionDialog } from './rejection-dialog';
-import coffeeImage from '@assets/Kaffee_1768855218017.png';
 
 interface ProductCardViewProps {
-  product: Product;
+  product: RatingProduct;
   onNotInterested: (reason?: string) => void;
   onMoreLikeThis: () => void;
   onTimeout: () => void;
@@ -62,7 +61,7 @@ export function ProductCardView({
   if (showRejectionDialog) {
     return (
       <RejectionDialog
-        product={product}
+        productName={product.name}
         onSelectReason={handleRejectionReason}
         onSkip={() => onNotInterested()}
       />
@@ -70,15 +69,11 @@ export function ProductCardView({
   }
 
   const displayStatus = statusText || (isFirstProduct ? 'Searching for options' : `Finding more like ${product.name.split(' ').slice(0, 3).join(' ')}`);
-  const priceFormatted = `${product.price_eur.toFixed(2).replace('.', ',')} €`;
 
   const attributes: Record<string, string> = {
-    'Röstung': product.roast,
-    'Bio/Fairtrade': product.bio_fair ? 'Ja' : 'Nein',
-    'Ganze Bohnen': product.whole_beans ? 'Ja' : 'Nein',
-    'Packungsgröße': `${product.pack_g}g`,
+    'Packungsgröße': product.pack_size,
     'Geschmacksnoten': product.tasting_notes.join(', '),
-    'Lieferzeit': product.shipping_days,
+    'Besonderheit': product.special,
   };
 
   return (
@@ -92,9 +87,9 @@ export function ProductCardView({
         <div className="flex flex-col md:flex-row">
           <div className="w-full md:w-72 h-72 bg-amber-50 flex items-center justify-center p-6 flex-shrink-0">
             <img 
-              src={coffeeImage} 
+              src={product.image_path} 
               alt={product.name}
-              className="w-32 h-32 object-contain"
+              className="max-w-full max-h-full object-contain"
             />
           </div>
 
@@ -106,7 +101,7 @@ export function ProductCardView({
             </div>
 
             <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-              <span>{priceFormatted}</span>
+              <span>{product.price}</span>
               <span>·</span>
               <span>{product.brand}</span>
             </div>

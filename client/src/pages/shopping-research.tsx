@@ -4,7 +4,7 @@ import {
   AppState, 
   WorkflowState, 
   WorkflowAnswers,
-  products, 
+  RATING_PRODUCTS, 
   STUDY_PROMPT, 
   NORMALIZED_TARGET,
   ProductRating,
@@ -207,7 +207,7 @@ export default function ShoppingResearch() {
   }, [logEvent]);
 
   const handleProductRating = useCallback((action: 'more_like_this' | 'not_interested', reason?: string) => {
-    const currentProduct = products[workflowState.currentProductIndex];
+    const currentProduct = RATING_PRODUCTS[workflowState.currentProductIndex];
     const currentId = currentProduct?.id;
     
     if (currentId) {
@@ -243,7 +243,7 @@ export default function ShoppingResearch() {
   }, [workflowState.currentProductIndex, submitRating, logEvent]);
 
   const handleNextProduct = useCallback(() => {
-    if (workflowState.currentProductIndex < products.length - 1) {
+    if (workflowState.currentProductIndex < RATING_PRODUCTS.length - 1) {
       setWorkflowState(prev => ({
         ...prev,
         currentProductIndex: prev.currentProductIndex + 1,
@@ -259,7 +259,7 @@ export default function ShoppingResearch() {
   }, [logEvent, setLocation]);
 
   useEffect(() => {
-    if (workflowState.currentProductIndex >= products.length && appState === 'product_cards') {
+    if (workflowState.currentProductIndex >= RATING_PRODUCTS.length && appState === 'product_cards') {
       setAppState('transition');
     }
   }, [workflowState.currentProductIndex, appState]);
@@ -306,9 +306,9 @@ export default function ShoppingResearch() {
           />
         )}
 
-        {appState === 'product_cards' && workflowState.currentProductIndex < products.length && (
+        {appState === 'product_cards' && workflowState.currentProductIndex < RATING_PRODUCTS.length && (
           <ProductCardView
-            product={products[workflowState.currentProductIndex]}
+            product={RATING_PRODUCTS[workflowState.currentProductIndex]}
             onNotInterested={(reason) => handleProductRating('not_interested', reason)}
             onMoreLikeThis={() => handleProductRating('more_like_this')}
             onTimeout={handleNextProduct}
@@ -321,7 +321,7 @@ export default function ShoppingResearch() {
         {appState === 'transition' && (
           <TransitionScreen
             onComplete={handleTransitionComplete}
-            productsViewed={productsViewed || 6}
+            productsViewed={productsViewed || 5}
           />
         )}
       </div>
