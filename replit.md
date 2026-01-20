@@ -32,9 +32,22 @@ The complete participant flow:
 9. **Debrief** (`/debrief`): Study debrief with participant notes field and privacy notice with participant ID (Schritt 9)
 10. **Admin** (`/admin?password=<pw>`): Export study data as CSV/JSONL with health endpoint
 
-## Product Corpus (P01-P06)
+## Product Corpus
 
-6 fictional coffee products with fictional brand names:
+### Rating Products (R01-R05) - Used in Rating Phase Only
+
+5 real-world coffee products used ONLY for the product rating interaction (independent from study outcome):
+- **R01**: EDEKA Bio Caffe Crema (12,70€, 1kg)
+- **R02**: Melitta Barista Classic Crema (11,45€, 1kg)
+- **R03**: Jacobs Krönung Signature Classic (9,99€, 500g)
+- **R04**: Berliner Kaffeerösterei Azúcar Espresso (11,95€, 250g)
+- **R05**: Nicaragua Flores del Café (ab 9,90€, Single Origin)
+
+Images stored at: `attached_assets/R01*.jpg` through `attached_assets/R05*.jpg`
+
+### Guide/Choice Products (P01-P06) - Used for Study Outcome
+
+6 fictional coffee products with fictional brand names (used in Buyer's Guide and final choice):
 - **P01**: PachaLumo – Chanchamayo Bio (9,95€, hell, Bio/Fairtrade)
 - **P02**: Riftara – Yirgacheffe Flora (9,95€, hell, Bio/Fairtrade)
 - **P03**: Kuntaro – Cocoa Dark (9,95€, dunkel, Bio/Fairtrade)
@@ -69,10 +82,10 @@ The main research prototype at `/assistant`:
    - **10-second skip timer** on each question
    - **"Something else..." button** with text input for custom answers
 5. **Review Gate**: Product collage + "Vorschau & bewerten" button
-6. **Product Cards**: 6 products with Like/Dislike rating
+6. **Product Cards**: 5 real-world products (R01-R05) with Like/Dislike rating
    - Product name is NOT clickable
-   - Uses Kaffee.png image for all products
-   - Rejection reasons: Price, Taste profile, Sustainability, Brand/Trust, Something else
+   - Uses actual product images from attached_assets/
+   - Rejection reasons: Zu teuer, Röstgrad passt nicht, Marke unbekannt, Eigenschaften fehlen, Etwas anderes
 7. **Transition**: "Thanks for feedback" + progress bar
 8. **Navigate to /guide**: Automatic navigation after transition
 
