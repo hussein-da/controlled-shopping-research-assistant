@@ -247,6 +247,70 @@ export const products: Product[] = [
 
 export const TOP_6_PRODUCTS = products;
 
+export interface RatingProduct {
+  id: string;
+  name: string;
+  brand: string;
+  price: string;
+  pack_size: string;
+  tasting_notes: string[];
+  special: string;
+  image_path: string;
+}
+
+export const RATING_PRODUCTS: RatingProduct[] = [
+  {
+    id: "R01",
+    name: "EDEKA Bio Caffè Crema",
+    brand: "EDEKA Bio",
+    price: "12,70 €",
+    pack_size: "1 kg",
+    tasting_notes: ["mittel", "rund", "vielfältig"],
+    special: "Unabhängiger Testsieg",
+    image_path: "/assets/R01_1768905979935.jpg"
+  },
+  {
+    id: "R02",
+    name: "Melitta Barista Classic Crema",
+    brand: "Melitta",
+    price: "11,45 €",
+    pack_size: "1 kg",
+    tasting_notes: ["zartbitter", "rund"],
+    special: "Milchdrinks / Vollautomat",
+    image_path: "/assets/R02_1768905979935.jpg"
+  },
+  {
+    id: "R03",
+    name: "Jacobs Krönung Signature Classic",
+    brand: "Jacobs",
+    price: "9,99 €",
+    pack_size: "500 g",
+    tasting_notes: ["ausgewogen", "leicht nussig"],
+    special: "Alltagskaffee",
+    image_path: "/assets/R03_1768905979934.jpg"
+  },
+  {
+    id: "R04",
+    name: "Berliner Kaffeerösterei Azúcar Espresso",
+    brand: "Berliner Kaffeerösterei",
+    price: "11,95 €",
+    pack_size: "250 g",
+    tasting_notes: ["karamellig", "kräftige Süße"],
+    special: "Sofort verfügbar, 2–5 Tage",
+    image_path: "/assets/R04_1768905979934.jpg"
+  },
+  {
+    id: "R05",
+    name: "Nicaragua Flores del Café",
+    brand: "Berliner Kaffeekontor",
+    price: "ab 9,90 €",
+    pack_size: "Single Origin",
+    tasting_notes: ["nussig", "feinfruchtig", "mild"],
+    special: "Social-Project Single Origin",
+    image_path: "/assets/R05_1768905979933.jpg"
+  }
+];
+
 export interface WorkflowAnswers {
   r1_amount?: string[];
   r2_budget?: string[];
