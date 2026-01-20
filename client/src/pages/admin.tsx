@@ -74,12 +74,16 @@ export default function Admin() {
     window.open(`/api/admin/export/jsonl?password=${encodeURIComponent(password)}`, '_blank');
   };
 
-  const copySessionJson = (session: MergedSession) => {
+  const copySessionJson = async (session: MergedSession) => {
     const jsonStr = JSON.stringify(session, null, 2);
-    navigator.clipboard.writeText(jsonStr);
-    setCopiedId(session.participantId);
-    toast({ title: 'JSON kopiert', description: 'Teilnehmer-Daten in Zwischenablage kopiert' });
-    setTimeout(() => setCopiedId(null), 2000);
+    try {
+      await navigator.clipboard.writeText(jsonStr);
+      setCopiedId(session.participantId);
+      toast({ title: 'JSON kopiert', description: 'Teilnehmer-Daten in Zwischenablage kopiert' });
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      toast({ title: 'Fehler', description: 'Kopieren fehlgeschlagen. Bitte manuell kopieren.', variant: 'destructive' });
+    }
   };
 
   const handleExportCsvEnhanced = () => {
@@ -331,15 +335,15 @@ export default function Admin() {
                             </Badge>
                           ) : '–'}
                         </td>
-                        <td className="px-3 py-3">
+                        <td className="px-3 py-3" data-testid={`status-${session.participantId.slice(0, 8)}`}>
                           {session.completedAt ? (
-                            <Badge className="bg-green-100 text-green-700 text-xs">Komplett</Badge>
+                            <Badge variant="default" className="text-xs">Komplett</Badge>
                           ) : session.postSurvey ? (
-                            <Badge className="bg-amber-100 text-amber-700 text-xs">Post-Survey</Badge>
+                            <Badge variant="secondary" className="text-xs">Post-Survey</Badge>
                           ) : session.choiceProductId ? (
-                            <Badge className="bg-blue-100 text-blue-700 text-xs">Wahl</Badge>
+                            <Badge variant="secondary" className="text-xs">Wahl</Badge>
                           ) : session.preSurvey ? (
-                            <Badge className="bg-gray-100 text-gray-700 text-xs">Pre-Survey</Badge>
+                            <Badge variant="outline" className="text-xs">Pre-Survey</Badge>
                           ) : (
                             <Badge variant="outline" className="text-xs">Start</Badge>
                           )}
