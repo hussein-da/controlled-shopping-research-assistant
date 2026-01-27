@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Download, RefreshCw, Eye, Copy, Check } from 'lucide-react';
@@ -403,7 +402,7 @@ export default function Admin() {
       </div>
 
       <Dialog open={!!selectedSession} onOpenChange={() => setSelectedSession(null)}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%]" data-testid="admin-detail-dialog">
+        <DialogContent className="w-[min(720px,calc(100vw-2rem))] max-h-[90vh] overflow-y-auto" data-testid="admin-detail-dialog">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between gap-4">
               <span>Teilnehmer: {selectedSession?.participantId.slice(0, 12)}...</span>
@@ -419,7 +418,7 @@ export default function Admin() {
           </DialogHeader>
           
           {selectedSession && (
-            <ScrollArea className="h-[70vh] pr-4">
+            <div className="pr-4">
               <div className="space-y-6">
                 <section>
                   <h3 className="font-semibold text-gray-900 mb-2">Zeitstempel</h3>
@@ -604,7 +603,7 @@ export default function Admin() {
                   </>
                 )}
               </div>
-            </ScrollArea>
+            </div>
           )}
         </DialogContent>
       </Dialog>

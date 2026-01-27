@@ -1,0 +1,144 @@
+Du hast 4 Aufgaben. Bitte strikt nur diese erledigen. Keine UI-Änderungen außerhalb des genannten Modals, keine neuen Features, kein Refactor über das Nötigste hinaus. Token-sparend arbeiten: erst kurz prüfen, dann gezielt umsetzen.
+
+========================
+AUFGABE 0: ADMIN-PASSWORT ÄNDERN
+========================
+- Ändere das Admin-Passwort auf: study-admin-2026
+- Stelle sicher, dass Login weiterhin funktioniert.
+- Falls das Passwort in ENV/config liegt: aktualisiere .env.example entsprechend, aber kein Klartext in README, außer es ist explizit gewollt (hier: JA, Admin-PW soll dokumentiert werden, siehe README-Admin-Zugang).
+
+========================
+AUFGABE 1: ADMIN MODAL FIX (AUGE-ICON) – RESPONSIVE & ZENTRIERT
+========================
+Fixe ausschließlich das UI-Problem im Admin-Bereich: „Teilnehmer-Details“-Fenster (öffnet sich beim Klick auf das Auge-Icon) ist nicht responsive und erscheint zu weit unten statt zentriert im Viewport.
+
+Zielverhalten:
+- Modal/Dialog ist im Viewport zentriert (horizontal + vertikal).
+- Auf kleinen Screens: nahezu volle Breite mit Padding, max-height 90vh, Inhalt scrollbar.
+- Auf großen Screens: angenehme Max-Breite (z.B. 720px), nicht am unteren Rand „hängend“.
+- Overlay bleibt fullscreen (inset-0), dimmt Hintergrund wie bisher.
+- Keine Änderungen am Inhalt/Text, nur Layout/Positionierung/Responsive-Verhalten.
+
+Vorgehen (konservativ):
+1) Finde die Komponente, die beim Klick auf das Auge-Icon öffnet (ParticipantDetails / AdminParticipantModal o.ä.).
+2) Falls Radix/shadcn Dialog genutzt wird:
+   - Stelle sicher, dass der Dialog per Portal an <body> gerendert wird (nicht im Tabellen-Container).
+   - DialogOverlay: fixed inset-0, flex items-center justify-center, padding: 16px.
+   - DialogContent: fixed left-1/2 top-1/2, translate(-50%, -50%), responsive width, max-height 90vh, overflow-y auto.
+   Beispiel (Tailwind/shadcn-like):
+     DialogOverlay class:
+       "fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+     DialogContent class:
+       "z-50 w-[min(720px,calc(100vw-2rem))] max-h-[90vh] overflow-y-auto rounded-xl bg-white p-6 shadow-lg
+        fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+   - Entferne/ersetze jede Ausrichtung „items-end“, „bottom-*“, große margin-top oder translate-y, die den Dialog nach unten drückt.
+3) Falls es ein Custom-Modal ist (kein Radix):
+   - Overlay: position fixed; inset 0; display flex; align-items center; justify-content center; padding 16px;
+   - Content: width min(720px, calc(100vw - 2rem)); max-height 90vh; overflow-y auto; border-radius; background white;
+   - Content NICHT absolute innerhalb eines scrollenden Parent-Containers rendern. Nutze Portal oder hänge ihn an root/body.
+4) Achte darauf, dass der Dialog auch bei gescrollter Admin-Tabelle korrekt im Viewport erscheint (nicht relativ zur Scroll-Position des Containers).
+5) Regressions vermeiden: Auge-Icon öffnet weiterhin, Copy-Icon bleibt klickbar, ESC/Close funktioniert.
+
+Abnahmekriterien:
+- Modal erscheint immer mittig im Bildschirm (auch wenn die Tabelle nach unten gescrollt ist).
+- Kein „zu weit unten“-Offset mehr.
+- Auf Laptop/Smartphone keine abgeschnittenen Inhalte; stattdessen Scroll im Modal (max-h 90vh).
+- Kein Layoutbruch in der Admin-Tabelle.
+
+========================
+AUFGABE 2: ORDNERSTRUKTUR AUFRÄUMEN (MINIMAL, SICHER)
+========================
+Ziel: Repo aufräumen, aber NICHT kaputt machen.
+
+1) Prüfe den Ordner „attachment_assets“:
+   - Erstelle eine kurze Liste: welche Dateien werden wirklich referenziert (imported/used) und wo (Pfad + Datei).
+   - Welche Dateien sind unreferenziert / dead assets.
+   - Wichtig: NICHT löschen, bevor du sicher bist.
+   - Falls „attachment_assets“ nur Altlasten enthält:
+     - schlage vor: löschen ODER nach „/public/assets/legacy“ verschieben (konservativ).
+   - Falls er aktiv genutzt wird:
+     - migriere sauber in eine klare Struktur (z.B. /public/images oder /src/assets) und update alle Imports/Paths.
+
+2) Definiere eine klare Asset-Policy:
+   - UI-Bilder (Produktbilder, Kaffee-Bild): genau ein zentraler Ort (z.B. /public/images).
+   - Keine Duplikate.
+   - Build/Start muss unverändert funktionieren.
+
+3) Ergebnis:
+   - Repo ist aufgeräumter, funktional identisch.
+   - Keine Altlogik anfassen, außer tote Dateien/Ordner.
+
+========================
+AUFGABE 3: GITHUB-READY (README + SETUP + ADMIN/EXPORT-DOKU)
+========================
+Ziel: Ein Fremder kann das Repo klonen und starten; außerdem versteht er Admin-Auswertung, Exporte und JSON-Felder.
+
+Erstelle/überarbeite README.md mit folgenden Abschnitten (konkret, reproduzierbar):
+
+A) Projektüberblick
+- 2–4 Sätze: ChatGPT Shopping Research UI-Prototyp als Forschungsartefakt
+- Forschungszweck: UI/Choice-Architecture beobachten, Messung Produktwahl etc.
+- Hinweis: Produkte/Quellen sind simuliert (falls zutreffend)
+
+B) Architektur (kurz)
+- Frontend/Backend (konkret nennen, was im Repo ist)
+- Datenspeicherung (wo liegen Daten: DB/JSON/Dateiordner)
+- Wichtige Ordner (nur relevante)
+
+C) Ablauf im Prototyp (Flow)
+- Pre-Survey -> Task -> 4 Requirements -> Preview&Rate -> Buyer’s Guide -> Post-Survey -> Endscreen
+
+D) Installation & Start (für fremden PC)
+- Voraussetzungen: Node-Version + Package Manager konkret
+- Schritte:
+  1. git clone …
+  2. cd …
+  3. npm install
+  4. npm run dev / npm run start
+- Falls ENV nötig: .env.example anlegen + erklären (auch wenn leer)
+- Troubleshooting (Port belegt, Node-Version, fehlende env)
+
+E) Admin-Zugang & Auswertung
+- Wie kommt man in den Admin-Bereich? (Route/URL und Login-Maske)
+- Admin Credentials:
+  - Passwort: study-admin-2026
+  - (Benutzername nur falls vorhanden; ansonsten dokumentieren „single password gate“)
+- Was zeigt „Studien-Übersicht“ (Spalten erklären: ID, Alter, LLM, Guide-Zeit, Wahl, Status, Erstellt, Events, Aktionen)
+- Was macht das Auge (Detailansicht) und Copy (ID/JSON kopieren)
+
+F) Exporte & JSON-Feld-Dokumentation
+- Erkläre JSONL/CSV Export:
+  - Wo bekommt man sie (Buttons)
+  - Was enthalten sie
+- Dokumentiere die JSON-Struktur/Keys als Tabelle oder Bulletliste:
+  - participantId / sessionId
+  - timestamps (createdAt, completedAt)
+  - consent (adult, dataProcessing)
+  - preSurvey (z.B. age, llmUsage, etc.)
+  - events (eventType, step, timestamp, payload)
+  - choice (selectedProductId)
+  - durations (overall, perStep)
+  - guideTime / timeOnGuide
+  - status
+- Wenn Felder im aktuellen Export anders heißen: dokumentiere exakt die echten Keys.
+
+G) Reproduzierbarkeit
+- Known-good start
+- Was nicht ändern (optional)
+- Zitierhinweis (optional)
+
+H) Lizenz
+- Wenn keine Vorgabe: MIT License + LICENSE Datei
+
+Randregeln:
+- Keine großen Umbauten. Nur: Modal-Fix, Asset-Cleanup, README + ggf. .env.example + LICENSE + minimal package.json Script-Anpassung falls notwendig, damit „npm install“ + „npm run dev“ direkt läuft.
+
+========================
+OUTPUT AM ENDE (KURZ)
+========================
+Gib mir am Ende:
+1) Summary der Änderungen (max. 8 Bulletpoints)
+2) Finalen README.md Inhalt (vollständig)
+3) Liste verschobener/gelöschter Assets (alt -> neu)
+4) Hinweis, wo das Admin-Passwort geändert wurde (Datei/ENV)
+5) für mich eine Anleitung wie ich mir das lokal ziehe auf mein pc oder direkt hier über replit auf GitHub privat hochlade bei meinem acc

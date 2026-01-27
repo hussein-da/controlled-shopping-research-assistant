@@ -313,7 +313,7 @@ export async function registerRoutes(
     }
   });
 
-  const adminPassword = process.env.ADMIN_PASSWORD || "study-admin-2024";
+  const adminPassword = process.env.ADMIN_PASSWORD || "study-admin-2026";
 
   app.get("/api/admin/sessions", async (req, res) => {
     const { password } = req.query;

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Background -->
+  <circle cx="32" cy="32" r="32" fill="#009fe3"></circle>
+
+  <!-- Cup -->
+  <rect x="20" y="30" width="20" height="12" rx="2" fill="#ffffff"></rect>
+  <rect x="18" y="42" width="24" height="3" rx="1.5" fill="#ffffff"></rect>
+
+  <!-- Handle -->
+  <path d="M40 32c4 0 6 2 6 5s-2 5-6 5" fill="none" stroke="#ffffff" stroke-width="2"></path>
+
+  <!-- AI swirl / steam -->
+  <path d="M32 18c-4 0-4 4 0 4s4 4 0 4" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round"></path>
+</svg>
