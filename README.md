@@ -1,245 +1,374 @@
-# Shopping Research Study Platform
+# Controlled Shopping Research Assistant (CSRA)
 
-A ChatGPT-style shopping research UI prototype for a Bachelor's thesis on Nudging/Agentic Commerce. This platform simulates a shopping assistant experience to observe choice architecture patterns and measure product selection behavior.
+Ein kontrolliertes Forschungsartefakt zur Untersuchung von Nudging/Agentic Commerce im Rahmen einer Bachelorarbeit. Diese Plattform simuliert einen KI-Shopping-Assistenten in einer kontrollierten Studienumgebung.
 
-**Note:** All products and sources are simulated for research purposes only. No real purchases occur.
+## Projektüberblick
 
-## Architecture
+**CSRA** ist ein wissenschaftliches Forschungswerkzeug, das einen Shopping-Assistenten-Prototypen mit einem strukturierten Studien-Wrapper kombiniert. Es dient der Untersuchung, wie KI-gestützte Kaufempfehlungen die Entscheidungsfindung beeinflussen.
 
-- **Frontend:** React + Vite + TypeScript + TailwindCSS + shadcn/ui
-- **Backend:** Express.js + TypeScript
-- **Database:** PostgreSQL (Drizzle ORM)
-- **Data Storage:** All participant data stored in PostgreSQL with full event tracking
+**Wichtige Eigenschaften:**
+- Kein echter Web-Zugriff oder externe APIs
+- Kein echtes Shopping - nur UI und kontrollierte Workflows
+- Deterministisches Verhalten für reproduzierbare Forschung
+- Vollständig anonymisierte Datenerfassung (nur UUID-basierte Participant-IDs)
 
-### Project Structure
+**Hinweis:** Alle Produkte und Quellen sind simuliert. Es finden keine echten Käufe statt.
+
+## Tech-Stack
+
+| Komponente | Technologie | Version |
+|------------|-------------|---------|
+| **Frontend** | React + TypeScript | 18.3.x |
+| **Styling** | Tailwind CSS + shadcn/ui | 3.4.x |
+| **Routing** | wouter | 3.3.x |
+| **Backend** | Express.js | 4.21.x |
+| **Build** | Vite | 7.3.x |
+| **Storage** | File-based (JSONL) | - |
+| **Runtime** | Node.js | >=18.0.0 |
+
+**Storage-Modi:**
+- **Standard (lokal):** Dateibasierte Speicherung in `./data/` (JSONL-Format)
+- **Optional (Cloud):** PostgreSQL via `DATABASE_URL` Environment-Variable
+
+## Study-Flow (User Journey)
+
+Der vollständige Ablauf für Teilnehmer:
 
 ```
-client/src/           # React frontend
-  pages/              # Study flow pages
-  components/         # UI components
-server/               # Express backend
-  routes.ts           # API endpoints
-  storage.ts          # Database layer
-shared/               # Shared types and schemas
-  schema.ts           # Data models and product definitions
-attached_assets/      # Product images and backgrounds
+/start → /consent → /pre → /task → /assistant → /guide → /choice → /post → /debrief
 ```
 
-## Study Flow
+### Schritt-für-Schritt
 
-The study follows a 9-step participant flow:
+| Schritt | Route | Beschreibung | Erfasste Daten |
+|---------|-------|--------------|----------------|
+| 1 | `/start` | Willkommensseite | - |
+| 2 | `/consent` | Einwilligungserklärung | Altersbestätigung, Datenverarbeitung |
+| 3 | `/pre` | Pre-Survey (5 Items) | Alter, Shopping-Frequenz, LLM-Nutzung |
+| 4 | `/task` | Aufgabeninstruktionen | - |
+| 5 | `/assistant` | Shopping-Assistent Prototyp | Anforderungen, Produktbewertungen |
+| 6 | `/guide` | Buyer's Guide Anzeige | Lesezeit |
+| 7 | `/choice` | Produktauswahl (6 Optionen) | Gewähltes Produkt |
+| 8 | `/post` | Post-Survey (21 Items) | Mechanismus-Wahrnehmung, Outcomes |
+| 9 | `/debrief` | Debriefing + Feedback | Optionale Notizen |
 
-1. **Start** (`/start`) - Welcome page with study introduction
-2. **Consent** (`/consent`) - Age verification and data processing consent
-3. **Pre-Survey** (`/pre`) - 5 demographic and usage questions
-4. **Task** (`/task`) - Task instructions and target criteria
-5. **Assistant** (`/assistant`) - Main shopping research prototype:
-   - 4 requirement questions (Amount, Budget, Attributes, Grind type)
-   - Product preview and rating phase (5 products: R01-R05)
-6. **Guide** (`/guide`) - Buyer's Guide with product recommendations (P01-P06)
-7. **Choice** (`/choice`) - Final product selection from 6 options
-8. **Post-Survey** (`/post`) - 21 perception and outcome questions (Q1-Q21)
-9. **Debrief** (`/debrief`) - Study completion with participant notes
+### Shopping-Assistent Details
 
-## Installation & Setup
+Der Hauptprototyp unter `/assistant` umfasst:
+- 4 Requirement-Fragen (Menge, Budget, Attribute, Mahlart)
+- Produktvorschau und Bewertungsphase (5 Produkte: R01-R05)
+- 10-Sekunden Skip-Timer pro Frage
+- "Etwas anderes..."-Option für freie Texteingabe
 
-### Prerequisites
+## Datenmodell & Speicherung
 
-- Node.js 20.x or higher
-- npm 10.x or higher
-- PostgreSQL database
+### Erfasste Datenfelder
 
-### Steps
+**Session-Daten:**
+- `participantId`: Anonyme UUID
+- `createdAt`, `updatedAt`: Zeitstempel
+- `consentAge`, `consentData`: Einwilligungsstatus
+- `preSurvey`: Antworten Pre-Survey (5 Items)
+- `postSurvey`: Antworten Post-Survey (21 Items)
+- `requirements`: Gewählte Produktanforderungen
+- `deviationFlags`: Abweichungen von normalisierten Zielkriterien
+- `productRatings`: Bewertungen der Beispielprodukte (R01-R05)
+- `choiceProductId`: Final gewähltes Produkt (P01-P06)
+- `guideReadSeconds`: Lesezeit des Buyer's Guide
+- `completedAt`: Abschluss-Zeitstempel
+- `participantNotes`: Optionales Feedback
+
+**Event-Daten:**
+- `eventType`: Art des Events (navigation, click, selection, etc.)
+- `step`: Aktueller Studien-Schritt
+- `eventData`: Kontextdaten zum Event
+- `timestamp`: Zeitpunkt
+
+### Speicherort & Format
+
+```
+./data/
+├── sessions.jsonl    # Alle Session-Daten (eine JSON-Zeile pro Session)
+└── events.jsonl      # Alle Events (eine JSON-Zeile pro Event)
+```
+
+**Format:** JSONL (JSON Lines) - jede Zeile ist ein valides JSON-Objekt. Ideal für Append-Only-Schreibvorgänge und einfache Verarbeitung.
+
+### Datenschutz
+
+- **Keine personenbezogenen Daten (PII):** Keine Namen, E-Mails, IP-Adressen
+- **Anonymisierung:** Nur UUID-basierte Participant-IDs
+- **Lokale Speicherung:** Daten bleiben auf dem lokalen System
+- **Reset möglich:** Vollständiges Löschen aller Daten jederzeit möglich
+
+## Installation & Ausführung
+
+### Voraussetzungen
+
+- **Node.js:** Version 18.0.0 oder höher
+- **npm:** Wird mit Node.js installiert
+- **Git:** Für Repository-Klon
+
+### Schritt-für-Schritt Installation
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/shopping-research-study.git
-cd shopping-research-study
+# 1. Repository klonen
+git clone https://github.com/YOUR_USERNAME/controlled-shopping-research-assistant.git
 
-# 2. Install dependencies
+# 2. In Projektordner wechseln
+cd controlled-shopping-research-assistant
+
+# 3. Dependencies installieren
 npm install
 
-# 3. Set up environment variables
-cp .env.example .env
-# Edit .env with your database credentials
-
-# 4. Push database schema
-npm run db:push
-
-# 5. Start development server
+# 4. Anwendung starten
 npm run dev
 ```
 
-The application will be available at `http://localhost:5000`.
+Die Anwendung ist dann verfügbar unter: **http://localhost:5000**
+
+### Environment-Variablen (optional)
+
+Erstelle `.env` aus `.env.example` falls benötigt:
+
+```bash
+cp .env.example .env
+```
+
+**Verfügbare Variablen:**
+
+| Variable | Beschreibung | Default |
+|----------|--------------|---------|
+| `ADMIN_PASSWORD` | Admin-Bereich Passwort | `study-admin-2026` |
+| `DATABASE_URL` | PostgreSQL URL (optional) | - (verwendet File-Storage) |
+| `SESSION_SECRET` | Express Session Secret | auto-generiert |
 
 ### Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| Port 5000 in use | Change PORT in .env or kill existing process |
-| Database connection failed | Verify DATABASE_URL in .env |
-| Node version mismatch | Use Node.js 20.x (`nvm use 20`) |
+| Problem | Lösung |
+|---------|--------|
+| Port 5000 belegt | Anderen Port verwenden oder Prozess beenden |
+| Node.js Version zu alt | Node.js 18+ installieren: `nvm install 18` |
+| Permission denied auf data/ | `mkdir -p data && chmod 755 data` |
+| Module not found | `rm -rf node_modules && npm install` |
+| ENOENT data/sessions.jsonl | Normal beim ersten Start - Ordner wird automatisch erstellt |
 
-## Admin Panel & Data Export
+## Admin & Export
 
-### Accessing the Admin Panel
+### Admin-Zugang
 
-Navigate to `/admin` and enter the admin password.
+1. **Admin-Button:** Kleines Zahnrad-Icon unten rechts auf allen Seiten
+2. **Passwort eingeben:** Standard ist `study-admin-2026`
+3. **Navigation:** "Zur Studie" Button führt zurück zum Study-Flow
 
-**Admin Credentials:**
-- Password: `study-admin-2026`
-- (Single password gate, no username required)
+### Admin-Übersicht
 
-### Study Overview Table
+Die Admin-Seite zeigt alle Teilnehmer-Sessions mit folgenden Spalten:
 
-The admin panel displays all participant sessions with these columns:
-
-| Column | Description |
+| Spalte | Beschreibung |
 |--------|-------------|
-| ID | Participant UUID (truncated) |
-| Alter | Age from pre-survey |
-| LLM | LLM usage frequency |
-| Guide-Zeit | Time spent on Buyer's Guide (seconds) |
-| Wahl | Selected product ID (P01-P06) |
-| Status | Completion status (complete/incomplete) |
-| Erstellt | Session creation timestamp |
-| Events | Number of tracked events |
-| Aktionen | View details (eye icon), Copy ID (copy icon) |
+| ID | Participant UUID (gekürzt) |
+| Alter | Alter aus Pre-Survey |
+| LLM | LLM-Nutzungshäufigkeit |
+| Guide-Zeit | Lesezeit Buyer's Guide (Sekunden) |
+| Wahl | Gewähltes Produkt (P01-P06) |
+| Status | Abschlussstatus |
+| Erstellt | Session-Erstellungszeitpunkt |
+| Events | Anzahl getrackte Events |
+| Aktionen | Details (Auge), ID kopieren |
 
-### Detail View (Eye Icon)
+### Detailansicht (Auge-Icon)
 
-Click the eye icon to see full participant data including:
-- Timestamps (created, completed)
-- Consent status
-- Pre-survey responses
-- Requirement answers with deviation flags
-- Product ratings (R01-R05)
-- Guide timing data
-- Final choice
-- Post-survey responses
-- Event log
+Klick auf das Auge-Icon zeigt alle Daten einer Session:
+- Zeitstempel (erstellt, abgeschlossen)
+- Consent-Status
+- Pre-Survey Antworten
+- Requirement-Antworten mit Deviation-Flags
+- Produktbewertungen (R01-R05)
+- Guide-Timing-Daten
+- Finale Produktwahl
+- Post-Survey Antworten
+- Event-Log
 
-### Data Export
+### Export-Funktionen
 
-Export buttons are available in the admin panel:
+Export-Buttons in der Admin-Oberfläche:
 
-- **JSONL Export:** One JSON object per line, includes all session data
-- **CSV Export:** Tabular format for spreadsheet analysis
-- **Copy JSON:** Per-participant JSON via detail dialog
+- **JSONL Export:** Ein JSON-Objekt pro Zeile, enthält alle Session-Daten
+- **CSV Export:** Tabellenformat für Excel/SPSS-Analyse
 
-## JSON Field Documentation
+Downloads werden vom Browser gespeichert:
+- `csra-export-YYYY-MM-DD.jsonl`
+- `csra-export-YYYY-MM-DD.csv`
 
-### Session Fields
+## Reset / Clean Slate
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `participantId` | string | UUID identifying the participant |
-| `createdAt` | timestamp | Session start time |
-| `completedAt` | timestamp | Session completion time (null if incomplete) |
-| `consentAge` | boolean | Adult consent checkbox |
-| `consentData` | boolean | Data processing consent checkbox |
+### Lokale Daten löschen
+
+```bash
+# Manuell: data-Ordner leeren
+rm -rf data/*
+
+# Alternative: Ordner löschen (wird beim nächsten Start neu erstellt)
+rm -rf data/
+```
+
+**Hinweis:** Reset löscht nur Studiendaten, nicht den Code.
+
+### Für neue Testläufe
+
+1. Daten löschen (siehe oben)
+2. Anwendung neu starten: `npm run dev`
+3. Studie beginnt automatisch mit leerer Datenbank
+
+## Optionaler DB-Modus
+
+Falls PostgreSQL gewünscht ist (z.B. für Cloud-Deployment):
+
+1. PostgreSQL-Datenbank bereitstellen
+2. `DATABASE_URL` in `.env` setzen:
+   ```
+   DATABASE_URL=postgresql://user:password@host:5432/dbname
+   ```
+3. Schema pushen: `npm run db:push`
+4. Anwendung starten
+
+**Wichtig:** Der Default-Modus ist File-Storage. PostgreSQL ist nur für spezielle Anforderungen gedacht.
+
+## Projektstruktur
+
+```
+├── client/src/
+│   ├── components/         # UI-Komponenten
+│   │   ├── shopping/       # Shopping-Assistent Komponenten
+│   │   └── ui/             # shadcn/ui Basiskomponenten
+│   ├── pages/              # Seiten (Study-Flow + Admin)
+│   └── lib/                # Utilities und Context
+├── server/
+│   ├── index.ts            # Express Server Entry
+│   ├── routes.ts           # API Endpoints
+│   ├── storage.ts          # Storage Interface (wählt File oder DB)
+│   └── file-storage.ts     # File-based Implementation
+├── shared/
+│   └── schema.ts           # Datenmodelle und Typen
+├── scripts/                # Utility Scripts
+├── data/                   # Lokale Studiendaten (gitignored)
+└── attached_assets/        # Statische Bilder
+```
+
+## JSON-Feld-Dokumentation
 
 ### Pre-Survey (`preSurvey`)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `p1_age` | number | Participant age (18-99) |
-| `p4_online_shopping` | string | Shopping frequency: selten/monatlich/wöchentlich/mehrmals wöchentlich |
-| `p7_llm_usage` | string | LLM usage: nie/selten/wöchentlich/täglich |
-| `p8_llm_purchase` | string | LLM for purchases: ja/nein/unsicher |
-| `p9_familiarity` | number | AI shopping assistant familiarity (1-7 Likert) |
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| `p1_age` | number | Alter (18-99) |
+| `p4_online_shopping` | string | selten/monatlich/wöchentlich/mehrmals wöchentlich |
+| `p7_llm_usage` | string | nie/selten/wöchentlich/täglich |
+| `p8_llm_purchase` | string | ja/nein/unsicher |
+| `p9_familiarity` | number | KI-Assistenten-Vertrautheit (1-7 Likert) |
 
 ### Requirements (`requirements`)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `r1_amount` | string[] | Pack size selection |
-| `r2_budget` | string[] | Budget range selection |
-| `r3_attributes` | string[] | Product attributes selection |
-| `r4_grind` | string[] | Grind type selection |
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| `r1_amount` | string[] | Mengenbedarf-Auswahl |
+| `r2_budget` | string[] | Budget-Auswahl |
+| `r3_attributes` | string[] | Attribut-Auswahl |
+| `r4_grind` | string[] | Mahlart-Auswahl |
 
 ### Deviation Flags (`deviationFlags`)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `r1_deviated` | boolean | User selected non-normalized amount |
-| `r2_deviated` | boolean | User selected non-normalized budget |
-| `r3_deviated` | boolean | User selected non-normalized attributes |
-| `r4_deviated` | boolean | User selected non-normalized grind |
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| `r1_deviated` | boolean | Abweichung bei Menge |
+| `r2_deviated` | boolean | Abweichung bei Budget |
+| `r3_deviated` | boolean | Abweichung bei Attributen |
+| `r4_deviated` | boolean | Abweichung bei Mahlart |
 
 ### Product Ratings (`productRatings`)
 
-Array of rating objects:
+Array von Rating-Objekten:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `productId` | string | Product ID (R01-R05) |
-| `action` | string | "more_like_this" or "not_interested" |
-| `reason` | string | Rejection reason (if not_interested) |
-| `timestamp` | number | Unix timestamp of rating |
-
-### Guide Timing
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `guideViewStartTs` | timestamp | When guide page was opened |
-| `guideContinueTs` | timestamp | When continue button was clicked |
-| `guideReadSeconds` | number | Calculated reading duration |
-
-### Choice
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `choiceProductId` | string | Selected product (P01-P06) |
-| `choiceTimestamp` | timestamp | When choice was made |
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| `productId` | string | Produkt-ID (R01-R05) |
+| `action` | string | "more_like_this" oder "not_interested" |
+| `reason` | string | Ablehnungsgrund (falls not_interested) |
+| `timestamp` | number | Unix-Zeitstempel |
 
 ### Post-Survey (`postSurvey`)
 
-| Field | Type | Description |
-|-------|------|-------------|
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
 | `q1_best_choice` | string | ja/nein/unsicher |
-| `q2_best_choice_likert` | number | 1-7 Likert scale |
-| `q3_which_product` | string | Product ID perceived as recommended |
+| `q2_best_choice_likert` | number | 1-7 Likert |
+| `q3_which_product` | string | Wahrgenommen empfohlenes Produkt |
 | `q4_read_carefully` | string | komplett/überflogen/kaum |
-| `q5_prestructured` - `q20_satisfaction` | number | Various 1-7 Likert items |
-| `q21_influences` | string[] | Multi-select influence factors |
+| `q5-q20` | number | Diverse 1-7 Likert Items |
+| `q21_influences` | string[] | Multi-Select Einflussfaktoren |
 
-### Events (`study_events` table)
+## Prüfer-Testcheckliste (5 Minuten)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Event UUID |
-| `participantId` | string | Associated participant |
-| `eventType` | string | Event type (e.g., mode_selected, product_feedback) |
-| `step` | string | Current study step |
-| `eventData` | object | Event-specific payload |
-| `timestamp` | timestamp | Event occurrence time |
+1. **Starten**
+   ```bash
+   npm install && npm run dev
+   ```
+   Browser öffnen: http://localhost:5000
 
-## Reproducibility
+2. **Survey durchführen**
+   - "Studie starten" klicken
+   - Einwilligung geben
+   - Pre-Survey ausfüllen
+   - Durch Shopping-Assistent navigieren
+   - Produkt wählen
+   - Post-Survey ausfüllen
 
-This study was conducted as part of a Bachelor's thesis at Hochschule Ruhr West.
+3. **Admin öffnen**
+   - Zahnrad-Icon unten rechts klicken
+   - Passwort: `study-admin-2026`
 
-### Known-Good Configuration
+4. **Ergebnisse sehen**
+   - Session in Liste finden
+   - Auge-Icon für Details klicken
 
-- Node.js 20.x
-- npm 10.x
-- PostgreSQL 15.x
+5. **Export ziehen**
+   - "JSONL" oder "CSV" Button klicken
+   - Download prüfen
 
-### Citation
+6. **Reset testen**
+   ```bash
+   rm -rf data/
+   ```
+   Anwendung neu starten - Admin zeigt leere Liste
 
-If you use this platform in your research, please cite:
+## Reproduzierbarkeit
+
+### Getestete Konfiguration
+
+- Node.js 18.x / 20.x
+- npm 9.x / 10.x
+- macOS / Linux / Windows (WSL)
+
+### Zitation
+
+Falls Sie diese Plattform in Ihrer Forschung verwenden:
 
 ```
 Daoud, H. (2026). Nudging in Agentic Commerce: A Study on Choice Architecture 
 in AI Shopping Assistants. Bachelor's Thesis, Hochschule Ruhr West.
 ```
 
-## Contact
+## Lizenz
+
+MIT License - siehe [LICENSE](LICENSE)
+
+## Kontakt
 
 **Studienleitung:**  
 Hussein Daoud (B.Sc. E-Commerce, Hochschule Ruhr West)  
 E-Mail: hussein.daoud@stud.hs-ruhrwest.de
 
-## License
+---
 
-MIT License - see [LICENSE](LICENSE) file for details.
+*Dieses Artefakt wurde im Rahmen einer Bachelorarbeit zum Thema Nudging/Agentic Commerce entwickelt.*

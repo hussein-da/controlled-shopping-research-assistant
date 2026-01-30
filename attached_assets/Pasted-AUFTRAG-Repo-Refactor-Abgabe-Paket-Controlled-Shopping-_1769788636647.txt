@@ -1,0 +1,149 @@
+AUFTRAG: Repo-Refactor + Abgabe-Paket – „Controlled Shopping Research Assistant“ (CSRA) muss lokal ohne Datenbank laufen, Ergebnisse als lokale Logs speichern und im Admin-UI rendern. Zusätzlich: README/Abgabe-Dokumentation massiv erweitern (Workflow, Tech-Stack, Datenhaltung, Installation, Betrieb, Export, Reset).
+
+Kontext
+Ich reiche meinen Prototypen „Controlled Shopping Research Assistant“ (CSRA) als Artefakt zur Bachelorarbeit ein. Prüfer und Wissenschaftler sollen das GitHub-Repo klonen, lokal starten, den Study-Flow durchlaufen und Ergebnisse lokal einsehen/exportieren können – ohne Replit, ohne externe DB, ohne Cloud-Abhängigkeiten. Aktuell existieren DB-Mechanismen (PostgreSQL/Drizzle). Für die Abgabe soll die Default-Ausführung auf lokale dateibasierte Logs umgestellt werden.
+
+KRITISCHE RANDBEDINGUNGEN (nicht verhandelbar)
+1) Nichts kaputtmachen: Keine riskanten Löschaktionen. Bestehende DB-Implementierung darf im Code bleiben, aber lokale Default-Ausführung muss OHNE DB funktionieren.
+2) Kein DB-Zwang: Lokal keine PostgreSQL/SQLite-Pflicht. Persistenz als lokale Logs/Dateien (z.B. JSONL/CSV) im Projektordner.
+3) Admin permanent erreichbar: In der UI dauerhaft sichtbarer, unauffälliger Admin-Button/Link (z.B. unten links klein oder oben rechts Icon) auf allen Seiten. Von Admin zurück in den Study-Flow („Zur Studie“).
+4) Naming: Prototyp und Branding sollen konsistent „Controlled Shopping Research Assistant“ heißen (UI, README, ggf. Titel, Navigationsbereich).
+5) Reproduzierbarkeit: Ein Prüfer muss mit minimalen Voraussetzungen starten können. Ideal: Node.js + npm (keine weitere Systemabhängigkeit).
+6) Datenschutz: Logs ohne PII. Participant-ID anonym (UUID ok). Keine Klarname/E-Mail/Versichertendaten/Telefon etc.
+7) Abgabe-Dokumentation: README muss so gut sein, dass ein Prüfer ohne Rückfragen installieren, starten, testen, Ergebnisse exportieren und resetten kann.
+
+Zielbild (Acceptance Criteria)
+A) Lokal startbar ohne DB
+- `npm install` + `npm run dev`/`npm run start` funktioniert ohne DATABASE_URL.
+- Nach Survey/Study-Flow werden Ergebnisse lokal persistiert.
+
+B) File-based Logging statt DB
+- Alle Study-relevanten Daten (Pre/Post Survey, Requirements, Ratings, Events, Completion-Status, Timestamp) werden lokal gespeichert.
+- Primärformat JSONL (append-only), optional zusätzlicher CSV-Export.
+- Speicherort: `./data/` oder `./logs/` im Repo; Ordner wird beim Start automatisch erstellt.
+- Admin-UI liest Logs und rendert Übersicht + Details.
+
+C) Admin UX
+- Globaler Admin-Link/Button auf allen Seiten.
+- Admin-Seite: Sessionliste + Detailansicht + Export (JSONL/CSV).
+- „Zur Studie“-Navigation zurück in den Study-Flow.
+
+D) Migration (einmalig) bestehender DB-Daten zu Logs (ohne Risiko)
+- Liefere Script/Command `npm run export:db-to-logs`, das (nur wenn DATABASE_URL gesetzt ist) DB-Inhalte in das neue File-Format exportiert.
+- Wenn keine DB vorhanden: sauberer Hinweis, kein Crash.
+
+E) Abgabe-README (zwingend – muss erstellt/erweitert werden)
+- Die README soll NICHT nur Minimaltext enthalten, sondern ein vollständiges Abgabe-/Reproduzierbarkeitsdokument sein.
+- Sie muss zusätzlich zu dem, was aktuell in README steht, mindestens folgende Abschnitte enthalten (und vorhandene Inhalte integrieren/überarbeiten, nicht duplizieren):
+
+E1) Projektüberblick
+- Kurzbeschreibung: Was ist CSRA und wofür dient es (BA-Artefakt).
+- Wichtig: Name überall „Controlled Shopping Research Assistant“.
+
+E2) Tech-Stack (konkret und repo-nah)
+- Frontend-Framework/Libs, Backend/Server, Build-Tools, Storage-Mechanismus (File logs), ggf. Test/Export-Komponenten.
+- Nenne Versionen, soweit im Repo ersichtlich (Node required version, package.json engines o.Ä.).
+
+E3) Workflow / User Journey (Study-Flow) – verständlich für Prüfer
+- Schrittweise Beschreibung:
+  - Start/Entry
+  - Survey-Phase(n)
+  - Agent/Recommendation-Phase
+  - Auswahl/Submission
+  - Completion
+- Gib an, wo im UI das passiert und welche Daten dabei erfasst werden (nur als Kategorien, ohne PII).
+
+E4) Datenmodell & Datenspeicherung (kritisch)
+- Welche Daten werden gespeichert (Felder/Kategorien)?
+- Wo genau werden sie gespeichert (Pfad `data/`/`logs/`)?
+- In welchem Format (JSONL/CSV)?
+- Wie werden „Sessions“, „Events“, „Completed“ repräsentiert?
+- Datenschutz-Hinweise (keine PII, Anonymisierung, Reset).
+
+E5) Installation & Ausführung (das Wichtigste)
+- Voraussetzungen:
+  - Node.js Version (konkret; wenn unklar, liefere Empfehlung + TODO)
+  - npm (oder pnpm/yarn falls verwendet – repo-nah)
+- Schritt-für-Schritt:
+  1) Repo klonen (git clone)
+  2) In Projektordner wechseln (cd)
+  3) Dependencies installieren (npm install)
+  4) Env-Datei anlegen (falls nötig, `.env` aus `.env.example`)
+  5) Start-Befehl (npm run dev / start) + erwartete URL
+- Troubleshooting: typische Fehler (Port belegt, Node-Version, fehlende Env, Permission auf data-folder).
+
+E6) Admin & Export (für Prüfer)
+- Wo ist der Admin-Button im UI?
+- Welche Ansicht gibt es (Liste, Details)?
+- Wie exportiert man Daten (Buttons/Downloads)?
+- Wie sieht ein Export aus (Dateinamen/Ort)?
+
+E7) Reset / Clean Slate (für neue Testläufe)
+- Wie löscht man lokale Daten (`npm run reset:data` oder manuell Pfad löschen).
+- Hinweis: Reset löscht nur lokale Logs, nicht Code.
+
+E8) Optional: DB-Modus (nur als Fallback/Kompatibilität, nicht Default)
+- Kurze Notiz, dass DB-Storage optional existiert (wenn du es im Repo lässt).
+- Klar: Default ist File logs; DB nur wenn explizit aktiviert.
+
+Arbeitsauftrag – Vorgehen (Pflicht)
+1) Repo scannen:
+- Identifiziere aktuelle Storage/DB-Anbindung (z.B. server/storage.ts, server/db.ts, routes.ts).
+- Identifiziere Admin UI (z.B. client/src/pages/admin.tsx) und Endpoints.
+- Identifiziere Study-Flow-Routen/Pages.
+- Lies die aktuelle README und integriere vorhandene Inhalte sinnvoll.
+
+2) Entkopplung über Storage-Interface (minimal-invasiv)
+- Führe `IStorage` ein (benötigte Operationen: create/update session, append event, list/get details, export).
+- Implementiere `FileStorage` als Default.
+- DB-Storage optional als alternative Implementierung behalten.
+
+3) FileStorage-Design (konkret)
+- Lege fest:
+  - `data/` vs `logs/`
+  - Struktur: Ordner pro Session (`data/sessions/<id>.json` + `data/events/<id>.jsonl`) ODER zentrale JSONL
+  - Schreibstrategie (appendFile, ensureDir)
+- Robustheit: best-effort gegen parallele Writes (für kleine Studien ausreichend).
+
+4) Admin-Button + Navigation
+- Implementiere globalen Admin-Link/Button im Layout.
+- Admin-Seite: „Zur Studie“ zurück.
+
+5) Export + Migration Script
+- Exports als Download (JSONL + optional CSV).
+- `npm run export:db-to-logs` für Migration, wenn DATABASE_URL gesetzt.
+
+6) README-Erstellung/Erweiterung
+- Erstelle/überarbeite README gemäß E1–E8.
+- Wichtig: Nicht nur hinzufügen, sondern bestehende README-Inhalte sauber integrieren (keine Doppelungen, konsistenter Stil).
+
+Deliverables (du lieferst in deinem Output alles Folgende)
+1) Implementierungsplan (Schritte, Dateipfade, Reihenfolge, Risiko-Minimierung).
+2) Konkrete Code-Änderungen:
+- Entweder Patch/Diff oder präzise Snippets pro Datei inkl. Einbau-Stellen.
+3) Vollständige neue/überarbeitete README (als zusammenhängender Text, direkt kopierbar).
+4) Kommandos:
+- Start: `npm run dev` oder `npm run start`
+- Migration: `npm run export:db-to-logs`
+- Reset: `npm run reset:data` (oder dokumentierter manueller Reset)
+5) Prüfer-Testcheckliste (5 Minuten):
+- Starten
+- Survey durchführen
+- Admin öffnen
+- Ergebnisse sehen
+- Export ziehen
+- Reset testen
+
+Wichtige Designentscheidungen (du musst explizit entscheiden und begründen)
+- Data-Pfad und Struktur
+- JSONL vs. pro-Session JSON
+- Completed-Kriterium
+- Export-Design
+- Minimale Datenfelder (keine PII)
+
+Stil/Output
+- Deutsch, präzise, ohne Floskeln.
+- Strikt repo-nah: Keine Behauptungen ohne Codebeleg; Unklarheiten als TODO + konkrete Frage.
+- Pro Änderung: Datei + Stelle + Zweck.
+
+Los: Analysiere jetzt das angehängte Repo/Dateien und liefere die Deliverables 1–5. Der Prototyp muss überall „Controlled Shopping Research Assistant“ heißen.

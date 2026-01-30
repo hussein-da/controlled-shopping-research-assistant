@@ -4,3 +4,11 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Local study data (contains participant responses)
+data/
+
+# Environment files with secrets
+.env
+.env.local
+.env.production

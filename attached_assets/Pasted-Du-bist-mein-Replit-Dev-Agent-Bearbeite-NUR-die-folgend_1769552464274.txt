@@ -1,0 +1,81 @@
+Du bist mein Replit-Dev-Agent. Bearbeite NUR die folgenden Fragen. Token-sparend: erst kurz analysieren, dann präzise beantworten. Keine neuen Features, kein Refactor, keine UI-Änderungen.
+
+========================
+ZIEL
+========================
+Ich muss wissen:
+(1) Wo die Studiendaten wirklich gespeichert werden (Replit DB vs Filesystem vs externe DB),
+(2) wie ich in den Admin komme und wie ich die Admin-Daten korrekt interpretiere,
+(3) wie ich das Projekt sauber und sicher auf GitHub veröffentliche (ohne Secrets/Teilnehmerdaten).
+
+========================
+A) DATENBANK / SPEICHERUNG
+========================
+A1) Wo werden die Studiendaten persistent gespeichert?
+- Replit DB / Replit Storage?
+- Datei-basiert im Projekt (JSON/JSONL/CSV unter einem Ordnerpfad)?
+- SQLite/DB-Datei im Projekt (z.B. *.sqlite)?
+- Externe DB (Postgres/Supabase/Firebase) via ENV wie DATABASE_URL?
+Gib mir die konkreten Dateien/Module/ENV-Keys und die Code-Stellen, wo geschrieben UND gelesen wird.
+
+A2) Persistenzverhalten:
+- Bleiben Daten nach Replit-Restart/Deployment erhalten?
+- Was passiert, wenn jemand das Repo auf einem fremden PC klont und startet: Sind Daten dann vorhanden/leer?
+- Welche minimale Anpassung wäre nötig, damit Speicherung lokal reproduzierbar bleibt?
+
+A3) Exporte/Logs:
+- Wo werden JSONL/CSV Exporte erzeugt (Pfad + Dateinamenmuster)?
+- Wo liegen Logs?
+- Liste alle Ordner/Dateien, die Teilnehmerdaten enthalten können.
+
+========================
+B) ADMIN-ZUGANG & AUSWERTUNG
+========================
+B1) Admin-Route:
+Welche URL/Route öffnet den Admin-Bereich (z.B. /admin)? Nenne exakte Route + Dateipfad, wo sie definiert ist.
+
+B2) Admin-Auth:
+Wie ist Admin-Zugang geschützt (Passwort-Gate, Session/Cookie, Basic Auth)?
+- Wo ist das Admin-Passwort konfiguriert (ENV vs hardcoded)?
+- Zeig mir die relevanten Code-Stellen.
+
+B3) Admin-Daten interpretieren:
+Erkläre kurz und technisch:
+- Bedeutung der Spalten: ID, Alter, LLM, Guide, Wahl, Status, Erstellt, Events
+- Was macht das Auge-Icon (Detailansicht)? Welche Felder zeigt es?
+- Was macht das Copy-Icon genau (ID kopieren oder JSON kopieren)?
+Bitte beziehe dich auf die tatsächlichen Felder aus dem Code/Export.
+
+========================
+C) GITHUB UPLOAD – BESTER WEG
+========================
+C1) Replit -> GitHub:
+Kann ich dieses Replit-Projekt direkt mit GitHub verbinden und pushen?
+Wenn ja: gib mir eine Schrittfolge (entweder Replit-UI Schritte ODER git commands) inkl. remote setzen, commit, push.
+
+C2) Alternative ZIP -> VS Code -> GitHub:
+Falls Replit-Push nicht sauber geht: ist ZIP-Download + lokaler Push besser?
+Gib mir die empfohlene Schrittfolge.
+
+========================
+D) SICHERHEIT / DSGVO VOR GITHUB
+========================
+D1) Safety-Check im Repo:
+Finde alles, was NICHT auf GitHub soll:
+- API-Keys / Tokens / Secrets
+- .env Dateien oder harte Credentials
+- Teilnehmerdaten/Exports (JSONL/CSV)
+- personenbezogene Daten (E-Mails, Namen, IPs, User-Agents)
+Gib Liste: Dateipfad + Fundstelle (z.B. Zeile/Pattern) + Risiko + konkrete ToDo (löschen / .gitignore / in ENV verschieben / anonymisieren).
+
+D2) Public-Release Entscheidungsliste:
+Sag mir klar:
+- Was muss vor PUBLIC GitHub entfernt/ersetzt werden?
+- Was ist unkritisch (z.B. „Bachelorarbeit, Hochschule Ruhr West, Name“)?
+
+========================
+OUTPUTFORMAT (STRIKT)
+========================
+1) Kurzantwort: 3–6 Bulletpoints (wichtigste Findings)
+2) Dann Tabelle: Thema | Ergebnis | Code/Dateipfad | Risiko | ToDo
+Keine langen Erklärtexte.

@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Download, RefreshCw, Eye, Copy, Check } from 'lucide-react';
+import { Loader2, Download, RefreshCw, Eye, Copy, Check, ArrowLeft } from 'lucide-react';
+import { Link } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import type { StudySession, StudyEvent, PreSurvey, PostSurvey, RequirementAnswers, ProductRating, DeviationFlags } from '@shared/schema';
 import { products } from '@shared/schema';
@@ -266,9 +267,17 @@ export default function Admin() {
     <div className="min-h-screen bg-gray-50 px-4 py-8">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-2xl font-semibold text-gray-900">
-            Studien-Übersicht
-          </h1>
+          <div className="flex items-center gap-4">
+            <Link href="/start">
+              <Button variant="ghost" size="sm" data-testid="admin-back-to-study">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Zur Studie
+              </Button>
+            </Link>
+            <h1 className="text-2xl font-semibold text-gray-900">
+              CSRA Admin
+            </h1>
+          </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={handleRefresh} data-testid="admin-refresh">
               <RefreshCw className="w-4 h-4 mr-2" />
