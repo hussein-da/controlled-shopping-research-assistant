@@ -45,7 +45,7 @@ Ein kontrolliertes Forschungsartefakt zur Untersuchung von Nudging/Agentic Comme
 
 ```bash
 # 1. Repository klonen
-git clone https://github.com/YOUR_USERNAME/controlled-shopping-research-assistant.git
+git clone https://github.com/hussein-da/controlled-shopping-research-assistant.git
 cd controlled-shopping-research-assistant
 
 # 2. Dependencies installieren (ca. 5-10 Minuten beim ersten Mal)
@@ -384,7 +384,7 @@ Setzt `NODE_ENV=production` und startet kompilierten Server.
 git init
 
 # 2. Remote hinzufügen
-git remote add origin https://github.com/YOUR_USERNAME/controlled-shopping-research-assistant.git
+git remote add origin https://github.com/hussein-da/controlled-shopping-research-assistant.git
 
 # 3. Alle Dateien stagen (außer .gitignore)
 git add .
