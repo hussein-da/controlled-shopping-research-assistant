@@ -91,30 +91,23 @@ app.use((req, res, next) => {
   const port = parseInt(process.env.PORT || "5000", 10);
   const isDev = process.env.NODE_ENV !== "production";
   
-  httpServer.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    async () => {
-      const url = `http://localhost:${port}`;
-      log(`✅ Server läuft auf ${url}`);
-      log(`📁 Daten werden gespeichert in: ./data/`);
-      
-      if (isDev) {
-        log(`🔄 Development Mode - Auto-Reload aktiv`);
-        log(`🛑 Zum Beenden: Drücke Ctrl+C`);
-        
-        // Versuche Browser zu öffnen
-        try {
-          const open = (await import("open")).default;
-          await open(url);
-          log(`🌐 Browser öffnet sich automatisch...`);
-        } catch (err) {
-          log(`💡 Öffne manuell: ${url}`);
-        }
+  httpServer.listen(port, async () => {
+    const url = `http://localhost:${port}`;
+    log(`✅ Server läuft auf ${url}`);
+    log(`📁 Daten werden gespeichert in: ./data/`);
+
+    if (isDev) {
+      log(`🔄 Development Mode - Auto-Reload aktiv`);
+      log(`🛑 Zum Beenden: Drücke Ctrl+C`);
+
+      // Versuche Browser zu öffnen
+      try {
+        const open = (await import("open")).default;
+        await open(url);
+        log(`🌐 Browser öffnet sich automatisch...`);
+      } catch (err) {
+        log(`💡 Öffne manuell: ${url}`);
       }
-    },
-  );
+    }
+  });
 })();
